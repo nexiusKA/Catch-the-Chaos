@@ -244,7 +244,6 @@ export class Player {
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(def.label, ix + barW / 2, cy - 82 + barH / 2);
-      ctx.textBaseline = 'alphabetic';
 
       ix += barW + gap;
     });

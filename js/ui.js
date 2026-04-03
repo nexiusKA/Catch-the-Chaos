@@ -57,8 +57,6 @@ export class UI {
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(`LVL ${g.difficultyLevel}`, 8, 78);
 
-    ctx.textBaseline = 'alphabetic';
-
     this._drawFeverMeter(ctx);
   }
 

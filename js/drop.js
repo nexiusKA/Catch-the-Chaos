@@ -278,6 +278,5 @@ export class Drop {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, 0, 0);
-    ctx.textBaseline = 'alphabetic';
   }
 }
