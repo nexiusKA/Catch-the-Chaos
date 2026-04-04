@@ -121,7 +121,7 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
         font-size: 0.82rem;
         color: var(--muted);
       }
-      .git-info summary {
+      .git-info > summary {
         cursor: pointer;
         color: var(--accent);
         font-size: 0.85rem;
@@ -129,9 +129,9 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
         user-select: none;
         list-style: none;
       }
-      .git-info summary::-webkit-details-marker { display: none; }
-      .git-info summary::before { content: "▶ "; font-size: 0.65rem; }
-      details[open] .git-info summary::before { content: "▼ "; }
+      .git-info > summary::-webkit-details-marker { display: none; }
+      .git-info > summary::before { content: "▶ "; font-size: 0.65rem; }
+      .git-info[open] > summary::before { content: "▼ "; }
       .git-info-grid {
         margin-top: 10px;
         display: grid;
@@ -160,16 +160,14 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
         <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
       </div>
       <div class="meta">Build version ${escapeHtml(appVersion)}</div>
-      <details>
-        <div class="git-info">
-          <summary>Git Info</summary>
-          <dl class="git-info-grid">
-            <dt>Version</dt><dd>${escapeHtml(appVersion)}</dd>
-            <dt>Commit</dt><dd>${commitLink}</dd>
-            <dt>Branch</dt><dd>${escapeHtml(branch) || "—"}</dd>
-            <dt>Build Date</dt><dd>${escapeHtml(buildDate) || "—"}</dd>
-          </dl>
-        </div>
+      <details class="git-info">
+        <summary>Git Info</summary>
+        <dl class="git-info-grid">
+          <dt>Version</dt><dd>${escapeHtml(appVersion)}</dd>
+          <dt>Commit</dt><dd>${commitLink}</dd>
+          <dt>Branch</dt><dd>${escapeHtml(branch) || "—"}</dd>
+          <dt>Build Date</dt><dd>${escapeHtml(buildDate) || "—"}</dd>
+        </dl>
       </details>
     </main>
   </body>
