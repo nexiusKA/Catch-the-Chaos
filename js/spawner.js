@@ -32,6 +32,9 @@ export class Spawner {
       active:     false,
       activeCooldown: 0,
       puffs:      [],
+      jumpY:      0,
+      jumpVY:     0,
+      jumpTimer:  0,
     }));
 
     // Spawn timing
@@ -69,6 +72,18 @@ export class Spawner {
       m.puffTimer    += dt;
       m.activeCooldown = Math.max(0, m.activeCooldown - dt);
       if (m.activeCooldown <= 0) m.active = false;
+
+      // Jump animation (triggered on every fart / drop spawn)
+      if (m.jumpTimer > 0) {
+        m.jumpTimer -= dt;
+        m.jumpVY    += 400 * dt;        // gravity pulls back down
+        m.jumpY     += m.jumpVY * dt;
+        if (m.jumpY >= 0) {             // landed back at resting position
+          m.jumpY     = 0;
+          m.jumpVY    = 0;
+          m.jumpTimer = 0;
+        }
+      }
 
       if (m.puffTimer >= m.puffInterval) {
         m.puffTimer = 0;
@@ -123,6 +138,11 @@ export class Spawner {
     m.active         = true;
     m.activeCooldown = 0.22;
 
+    // Fart-jump: cat leaps upward when releasing a drop
+    m.jumpY     = 0;
+    m.jumpVY    = -120;  // launch upward ~18 px peak
+    m.jumpTimer = 0.8;   // safety cap; stops when it lands back
+
     // Play a random fart sound on every drop spawn
     if (this.fartSound) this.fartSound.playRandom();
 
@@ -150,7 +170,7 @@ export class Spawner {
   _drawMachine(ctx, m) {
     const bob = Math.sin(m.animTimer) * 3;
     ctx.save();
-    ctx.translate(m.x, 42 + bob);
+    ctx.translate(m.x, 42 + bob + m.jumpY);
 
     this._drawCat(ctx, m);
 
@@ -165,7 +185,7 @@ export class Spawner {
         ctx.fillStyle = '#AAFFAA';
       }
       ctx.beginPath();
-      ctx.arc(p.ox, p.y - 42 - bob, p.size, 0, Math.PI * 2);
+      ctx.arc(p.ox, p.y - 42 - bob - m.jumpY, p.size, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
