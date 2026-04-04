@@ -7,14 +7,18 @@ export const DROP_TYPES = Object.freeze({
   BAD:     'bad',
   SPECIAL: 'special',
   PISS:    'piss',
+  GOLDEN:  'golden',
 });
 
 export const SPECIAL_EFFECTS = Object.freeze({
-  MULTIPLIER: 'multiplier',
+  MULTIPLIER:  'multiplier',
   WIDE_BUCKET: 'wide_bucket',
-  SLOW_MO: 'slow_mo',
-  MAGNET: 'magnet',
-  SHIELD: 'shield',
+  SLOW_MO:     'slow_mo',
+  MAGNET:      'magnet',
+  SHIELD:      'shield',
+  SPEED_BOOST: 'speed_boost',
+  EXTRA_LIFE:  'extra_life',
+  GHOST:       'ghost',
 });
 
 const GOOD_COLORS = ['#8B4513', '#A0522D', '#6B3A2A', '#7B4B2A', '#9B6133'];
@@ -87,6 +91,13 @@ export class Drop {
       this.shape     = 5; // piss droplet
       this.glowColor = '#FFEE44';
       this.points    = 15;
+
+    } else if (this.type === DROP_TYPES.GOLDEN) {
+      this.color     = '#FFD700';
+      this.size      = rand(15, 24);
+      this.shape     = 6; // golden star
+      this.glowColor = '#FFEE00';
+      this.points    = 50;
 
     } else {
       // Special
@@ -162,6 +173,13 @@ export class Drop {
         ctx.rotate(-this.rotation); // keep droplet upright
         ctx.scale(1, 1 + Math.sin(this.age * 7) * 0.06);
         this._drawPissDroplet(ctx);
+        ctx.restore();
+        break;
+      case 6:
+        ctx.save();
+        ctx.rotate(-this.rotation); // keep star upright
+        ctx.scale(1, 1 + Math.sin(this.age * 6) * 0.07);
+        this._drawGoldenDrop(ctx);
         ctx.restore();
         break;
       default: this._drawOrb(ctx);    break;
@@ -294,6 +312,9 @@ export class Drop {
       slow_mo:     'SLO',
       magnet:      'MAG',
       shield:      'SHD',
+      speed_boost: 'SPD',
+      extra_life:  '❤',
+      ghost:       'GHO',
     };
     const label = labels[this.effect] || '?';
     ctx.font         = `bold ${Math.round(r * 0.65)}px Arial`;
@@ -305,8 +326,7 @@ export class Drop {
     ctx.fillText(label, 0, r * 0.85);
   }
 
-  _drawPissDroplet(ctx) {
-    const r = this.size;
+  _drawPissDroplet(ctx) {    const r = this.size;
 
     // Yellow teardrop shape
     ctx.fillStyle   = '#FFE000';
@@ -334,5 +354,35 @@ export class Drop {
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('💦', 0, r * 0.1);
+  }
+
+  _drawGoldenDrop(ctx) {
+    const r = this.size;
+
+    // Pulsing outer sparkle ring
+    const pulse     = Math.sin(this.age * 8) * 0.4 + 0.6;
+    ctx.globalAlpha = pulse * 0.55;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth   = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 1.85, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Spinning dashed gold ring
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 1.4, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ⭐ emoji
+    const fontSize = Math.round(r * 2.4);
+    ctx.font         = `${fontSize}px Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('⭐', 0, 0);
   }
 }
