@@ -157,7 +157,10 @@ export class UI {
     ctx.font         = '11px Arial';
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText(__APP_VERSION__, W - 8, H - 8);
+    // __APP_VERSION__ is replaced at build time by esbuild; fall back to 'dev'
+    // when running directly from source so the render loop doesn't crash.
+    const appVersion = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+    ctx.fillText(appVersion, W - 8, H - 8);
 
     ctx.restore();
   }
