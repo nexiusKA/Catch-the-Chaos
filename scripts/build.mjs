@@ -206,11 +206,11 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
       </details>
     </main>
     <script>
-      var c = document.getElementById('stars');
-      for (var i = 0; i < 80; i++) {
-        var s = document.createElement('span');
-        var sz = Math.random() * 2.5 + 0.5;
-        s.style.cssText = 'width:' + sz + 'px;height:' + sz + 'px;top:' + (Math.random()*100) + '%;left:' + (Math.random()*100) + '%;--d:' + (Math.random()*3+1.5).toFixed(1) + 's;animation-delay:' + (Math.random()*3).toFixed(1) + 's';
+      const c = document.getElementById('stars');
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('span');
+        const sz = Math.random() * 2.5 + 0.5;
+        s.style.cssText = \`width:\${sz}px;height:\${sz}px;top:\${Math.random()*100}%;left:\${Math.random()*100}%;--d:\${(Math.random()*3+1.5).toFixed(1)}s;animation-delay:\${(Math.random()*3).toFixed(1)}s\`;
         c.appendChild(s);
       }
     </script>
