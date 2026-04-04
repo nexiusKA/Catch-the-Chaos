@@ -298,7 +298,7 @@ async function runBuild() {
   }
   const appVersion = `0.${buildNumber}`;
   const gitInfo = getGitInfo();
-  const buildDate = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  const buildDate = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   const buildInfo = { ...gitInfo, buildDate };
   const [templateHtml, perkLibraryTemplateHtml, showcaseTemplateHtml, skillsShowcaseTemplateHtml, cssContent, staticPagesCssContent] = await Promise.all([
     readFile(templateHtmlPath, "utf8"),
