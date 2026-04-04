@@ -174,12 +174,10 @@
   </main>
 
   <script>
-    // Set version text only when placeholder has been replaced by the build
+    // Show version; fall back to 'dev' when the build placeholder hasn't been replaced
     (function() {
       const v = "v__APP_VERSION__";
-      if (!v.includes("__")) {
-        document.getElementById("app-version").textContent = v;
-      }
+      document.getElementById("app-version").textContent = v.includes("__") ? "dev" : v;
     })();
 
     // Generate random stars
