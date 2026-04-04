@@ -132,7 +132,7 @@ export class UI {
     // Controls hint
     ctx.fillStyle = '#FFD700';
     ctx.font      = 'bold 15px Arial';
-    ctx.fillText('← / → or  A / D  to move  |  ◀ ▶ on mobile', W / 2, H * 0.28 + 124);
+    ctx.fillText('← / → or A / D to move  |  ◀ ▶ on mobile', W / 2, H * 0.28 + 124);
 
     // Blinking prompt
     const pulse = 0.7 + Math.sin(t * 4) * 0.3;
