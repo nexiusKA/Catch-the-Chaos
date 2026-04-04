@@ -18,13 +18,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare dist
-        run: |
-          mkdir -p dist
-          cp index.html style.css dist/
-          cp -r js assets dist/
-          VERSION=$(node -p "require('./package.json').version")
-          sed -i "s/__VERSION__/v$VERSION #${{ github.run_number }}/g" dist/js/ui.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: node scripts/build.js
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -36,7 +42,7 @@ jobs:
       - name: Create or update latest release
         run: |
           gh release delete latest --yes 2>/dev/null || true
-          gh release create latest dist/index.html \
+          gh release create latest dist/game.html \
             --title "Latest Build (run ${{ github.run_number }})" \
             --notes "Built from commit ${{ github.sha }} on $(date -u +%Y-%m-%d)" \
             --prerelease

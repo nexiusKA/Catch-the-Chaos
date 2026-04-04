@@ -1,5 +1,13 @@
 {
   "name": "catch-the-chaos",
   "version": "0.1.0",
-  "description": "Catch the Chaos! browser game"
+  "description": "Catch the Chaos! browser game",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.2",
+    "html-minifier-terser": "^7.2.0"
+  }
 }

@@ -1,0 +1,185 @@
+:root {
+  --bg: #0a0f14;
+  --panel: #101922;
+  --border: #243445;
+  --text: #e8f2fa;
+  --muted: #9fb5c7;
+  --accent: #88e5b9;
+  --card-bg: #0c1219;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── Hero header ── */
+.hero {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 28px 20px 20px;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0 0 6px;
+  font-size: 1.9rem;
+}
+
+.hero .sub {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 620px;
+  margin-inline: auto;
+}
+
+.top-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.top-links a {
+  text-decoration: none;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.top-links a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.top-links a[aria-current="page"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ── Perk tag navigation ── */
+.perk-tag-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.perk-tag-nav a {
+  text-decoration: none;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.perk-tag-nav a:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Perk library ── */
+.perk-library {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.tag-section {
+  margin-bottom: 40px;
+}
+
+.tag-section h2 {
+  font-size: 1.15rem;
+  color: var(--accent);
+  margin: 0 0 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tag-section h2 span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
+.perk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.perk-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.perk-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.perk-card p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.perk-card .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.perk-id {
+  color: var(--muted);
+  font-family: monospace;
+}
+
+.perk-tags {
+  color: var(--accent);
+}
+
+/* ── Showcase / skills-showcase root ── */
+#showcase-root,
+#skills-showcase-root {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 18px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+
+footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
