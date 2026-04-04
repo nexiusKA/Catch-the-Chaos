@@ -69,7 +69,7 @@ ${buildStaticPageNav(currentPage)}
 
 function buildStaticPageFooter(appVersion) {
   return `<footer>
-      Generated from game build ${escapeHtml(appVersion)}. <a href="https://github.com/GIider/top-down-survival-shooter">GitHub Repository</a>
+      Generated from game build ${escapeHtml(appVersion)}. <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
     </footer>`;
 }
 
@@ -130,7 +130,7 @@ function buildLandingHtml(appVersion) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Top-Down Survival Shooter</title>
+    <title>Catch the Chaos!</title>
     <style>
       :root {
         --bg: #0a0f14;
@@ -194,14 +194,14 @@ function buildLandingHtml(appVersion) {
   </head>
   <body>
     <main class="panel">
-      <h1>Top-Down Survival Shooter</h1>
+      <h1>Catch the Chaos! 💨</h1>
       <p>Select a destination.</p>
       <div class="links">
         <a href="./game.html">Play Game</a>
         <a href="./perk-library.html">Perk Library</a>
         <a href="./showcase.html">Enemy Showcase</a>
         <a href="./skills-showcase.html">Skill Showcase</a>
-        <a href="https://github.com/GIider/top-down-survival-shooter">GitHub Repository</a>
+        <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
       </div>
       <div class="meta">Build version ${escapeHtml(appVersion)}</div>
     </main>
@@ -256,6 +256,7 @@ async function runBuild() {
     target: "es2020",
     legalComments: "none",
     minify: false,
+    define: { __APP_VERSION__: JSON.stringify(appVersion) },
   });
 
   const jsBundle = jsBundleResult.outputFiles[0].text;
