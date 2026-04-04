@@ -28,7 +28,7 @@ export const skillPerkCatalog = [
   {
     id: "slow_mo",
     name: "Slow-Mo",
-    description: "Slows all falling drops to 35 % of their normal speed, giving extra reaction time.",
+    description: "Slows all falling drops to 35% of their normal speed, giving extra reaction time.",
     tags: ["utility", "powerup"],
   },
   {
