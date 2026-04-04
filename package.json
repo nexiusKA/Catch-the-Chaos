@@ -1,13 +1,16 @@
 {
-  "name": "catch-the-chaos",
-  "version": "0.1.0",
-  "description": "Catch the Chaos! browser game",
+  "name": "top-down-survival-shooter",
+  "version": "1.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.mjs",
+    "test:regression:perkEngine": "node tests/regression/perkEngine.regression.mjs",
+    "test:regression:showcase": "node tests/regression/showcase.regression.mjs",
+    "test:regression": "npm run test:regression:perkEngine && npm run test:regression:showcase"
   },
   "devDependencies": {
-    "esbuild": "^0.25.2",
+    "esbuild": "^0.25.4",
     "html-minifier-terser": "^7.2.0"
   }
 }
