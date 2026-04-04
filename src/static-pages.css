@@ -1,11 +1,13 @@
 :root {
-  --bg: #0a0f14;
-  --panel: #101922;
-  --border: #243445;
-  --text: #e8f2fa;
-  --muted: #9fb5c7;
-  --accent: #88e5b9;
-  --card-bg: #0c1219;
+  --bg: #0a0a1a;
+  --panel: #0d0d20;
+  --border: #ff6600;
+  --border-subtle: rgba(255, 102, 0, 0.3);
+  --text: #ffffff;
+  --muted: #aaaaaa;
+  --accent: #FFD700;
+  --accent-orange: #ff6600;
+  --card-bg: #0a0a1a;
 }
 
 * {
@@ -15,7 +17,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Arial Black', Arial, sans-serif;
   background-color: var(--bg);
   color: var(--text);
   line-height: 1.5;
@@ -24,19 +26,26 @@ body {
 /* ── Hero header ── */
 .hero {
   background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
   padding: 28px 20px 20px;
   text-align: center;
+  box-shadow: 0 0 40px rgba(255, 102, 0, 0.18);
 }
 
 .hero h1 {
   margin: 0 0 6px;
   font-size: 1.9rem;
+  background: linear-gradient(180deg, #FFD700 0%, #FF6600 50%, #FF0066 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 8px rgba(255, 102, 0, 0.6));
 }
 
 .hero .sub {
   margin: 0 0 16px;
   color: var(--muted);
+  font-family: Arial, sans-serif;
   font-size: 0.95rem;
   max-width: 620px;
   margin-inline: auto;
@@ -52,7 +61,8 @@ body {
 .top-links a {
   text-decoration: none;
   color: var(--muted);
-  border: 1px solid var(--border);
+  font-family: Arial, sans-serif;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 0.88rem;
@@ -60,13 +70,13 @@ body {
 }
 
 .top-links a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--accent-orange);
+  color: #ff9944;
 }
 
 .top-links a[aria-current="page"] {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--accent-orange);
+  border-color: var(--accent-orange);
 }
 
 /* ── Perk tag navigation ── */
@@ -75,13 +85,14 @@ body {
   flex-wrap: wrap;
   gap: 8px;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .perk-tag-nav a {
   text-decoration: none;
   color: var(--muted);
-  border: 1px solid var(--border);
+  font-family: Arial, sans-serif;
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 0.82rem;
@@ -89,8 +100,8 @@ body {
 }
 
 .perk-tag-nav a:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--accent-orange);
+  color: #ff9944;
 }
 
 /* ── Perk library ── */
@@ -109,7 +120,7 @@ body {
   color: var(--accent);
   margin: 0 0 14px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .tag-section h2 span {
@@ -126,9 +137,15 @@ body {
 
 .perk-card {
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.perk-card:hover {
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 14px rgba(255, 102, 0, 0.25);
 }
 
 .perk-card h3 {
@@ -139,6 +156,7 @@ body {
 .perk-card p {
   margin: 0 0 10px;
   color: var(--muted);
+  font-family: Arial, sans-serif;
   font-size: 0.88rem;
 }
 
@@ -147,6 +165,7 @@ body {
   flex-wrap: wrap;
   gap: 6px;
   font-size: 0.78rem;
+  font-family: Arial, sans-serif;
 }
 
 .perk-id {
@@ -158,25 +177,18 @@ body {
   color: var(--accent);
 }
 
-/* ── Showcase / skills-showcase root ── */
-#showcase-root,
-#skills-showcase-root {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 20px 48px;
-}
-
 /* ── Footer ── */
 footer {
   text-align: center;
   padding: 18px 20px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
   color: var(--muted);
+  font-family: Arial, sans-serif;
   font-size: 0.83rem;
 }
 
 footer a {
-  color: var(--accent);
+  color: #ff9944;
   text-decoration: none;
 }
 

@@ -16,8 +16,6 @@ export function escapeHtml(text) {
 export const STATIC_PAGE_LINKS = [
   { href: "./game.html", label: "Play Game", key: "game" },
   { href: "./perk-library.html", label: "Perk Library", key: "perk-library" },
-  { href: "./showcase.html", label: "Enemy Showcase", key: "showcase" },
-  { href: "./skills-showcase.html", label: "Skill Showcase", key: "skills-showcase" },
 ];
 
 export function buildStaticPageNav(currentPage) {
