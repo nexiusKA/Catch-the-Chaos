@@ -4,6 +4,13 @@ import { fileURLToPath } from "node:url";
 import { build, transform } from "esbuild";
 import { minify } from "html-minifier-terser";
 import { skillPerkCatalog } from "../src/systems/perks/skillPerkCatalog.js";
+import {
+  escapeHtml,
+  buildStaticPageNav,
+  buildStaticPageHeader,
+  buildStaticPageFooter,
+  buildPerkLibraryParts,
+} from "./build-helpers.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,97 +39,7 @@ const outputStaticPagesCssPath = path.join(distDir, "static-pages.css");
 const outputLandingHtmlPath = path.join(distDir, "index.html");
 const legacyPerksDirPath = path.join(distDir, "perks");
 
-function escapeHtml(text) {
-  return String(text)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
-function buildStaticPageNav(currentPage) {
-  const links = [
-    { href: "./game.html", label: "Play Game", key: "game" },
-    { href: "./perk-library.html", label: "Perk Library", key: "perk-library" },
-    { href: "./showcase.html", label: "Enemy Showcase", key: "showcase" },
-    { href: "./skills-showcase.html", label: "Skill Showcase", key: "skills-showcase" },
-  ];
-
-  return links
-    .map((link) => {
-      const currentAttr = link.key === currentPage ? ' aria-current="page"' : "";
-      return `<a href="${link.href}"${currentAttr}>${link.label}</a>`;
-    })
-    .join("\n");
-}
-
-function buildStaticPageHeader({ title, subtitle, currentPage }) {
-  return `<section class="hero">
-      <h1>${escapeHtml(title)}</h1>
-      <p class="sub">${escapeHtml(subtitle)}</p>
-      <nav class="top-links" aria-label="Static page navigation">
-${buildStaticPageNav(currentPage)}
-      </nav>
-    </section>`;
-}
-
-function buildStaticPageFooter(appVersion) {
-  return `<footer>
-      Generated from game build ${escapeHtml(appVersion)}. <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
-    </footer>`;
-}
-
-function buildPerkLibraryParts() {
-  const sorted = [...skillPerkCatalog].sort((a, b) => a.name.localeCompare(b.name));
-  const groups = new Map();
-
-  for (let i = 0; i < sorted.length; i += 1) {
-    const perk = sorted[i];
-    const tags = Array.isArray(perk.tags) ? perk.tags : ["other"];
-    for (let t = 0; t < tags.length; t += 1) {
-      const tag = tags[t];
-      if (!groups.has(tag)) {
-        groups.set(tag, []);
-      }
-      groups.get(tag).push(perk);
-    }
-  }
-
-  const navItems = [...groups.keys()]
-    .sort((a, b) => a.localeCompare(b))
-    .map((tag) => `<a href="#tag-${escapeHtml(tag)}">${escapeHtml(tag)}</a>`)
-    .join("\n");
-
-  const sections = [...groups.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([tag, perks]) => {
-      const cards = perks
-        .map(
-          (perk) => `
-<article class="perk-card">
-  <h3>${escapeHtml(perk.name)}</h3>
-  <p>${escapeHtml(perk.description)}</p>
-  <div class="meta">
-    <span class="perk-id">${escapeHtml(perk.id)}</span>
-    <span class="perk-tags">${perk.tags.map((entry) => `#${escapeHtml(entry)}`).join(" ")}</span>
-  </div>
-</article>`
-        )
-        .join("\n");
-
-      return `
-<section id="tag-${escapeHtml(tag)}" class="tag-section">
-  <h2>${escapeHtml(tag)} <span>(${perks.length})</span></h2>
-  <div class="perk-grid">
-${cards}
-  </div>
-</section>`;
-    })
-    .join("\n");
-
-  return { navItems, sections };
-}
 
 function buildLandingHtml(appVersion) {
   return `<!doctype html>
@@ -369,7 +286,7 @@ async function runBuild() {
   await mkdir(distDir, { recursive: true });
   await rm(legacyPerksDirPath, { recursive: true, force: true });
 
-  const perkLibraryParts = buildPerkLibraryParts();
+  const perkLibraryParts = buildPerkLibraryParts(skillPerkCatalog);
   const perksSourceHtml = perkLibraryTemplateHtml
     .replace(/__APP_VERSION__/g, appVersion)
     .replace(
