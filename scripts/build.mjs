@@ -41,7 +41,13 @@ const legacyPerksDirPath = path.join(distDir, "perks");
 
 
 
-function buildLandingHtml(appVersion) {
+function buildLandingHtml(appVersion, gitInfo = {}) {
+  const { commitSha = "", branch = "", buildDate = "" } = gitInfo;
+  const shortSha = commitSha ? commitSha.slice(0, 7) : "";
+  const commitLink = commitSha
+    ? `<a href="https://github.com/nexiusKA/Catch-the-Chaos/commit/${escapeHtml(commitSha)}" target="_blank" rel="noopener noreferrer">${escapeHtml(shortSha)}</a>`
+    : "—";
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -107,6 +113,39 @@ function buildLandingHtml(appVersion) {
         font-size: 0.85rem;
         color: var(--muted);
       }
+      .git-info {
+        margin-top: 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .git-info summary {
+        cursor: pointer;
+        color: var(--accent);
+        font-size: 0.85rem;
+        letter-spacing: 0.03em;
+        user-select: none;
+        list-style: none;
+      }
+      .git-info summary::-webkit-details-marker { display: none; }
+      .git-info summary::before { content: "▶ "; font-size: 0.65rem; }
+      details[open] .git-info summary::before { content: "▼ "; }
+      .git-info-grid {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        word-break: break-all;
+      }
+      .git-info-grid dt {
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .git-info-grid dd { margin: 0; }
+      .git-info-grid a { color: var(--accent); }
+      .git-info-grid a:hover { text-decoration: underline; }
     </style>
   </head>
   <body>
@@ -121,6 +160,17 @@ function buildLandingHtml(appVersion) {
         <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
       </div>
       <div class="meta">Build version ${escapeHtml(appVersion)}</div>
+      <details>
+        <div class="git-info">
+          <summary>Git Info</summary>
+          <dl class="git-info-grid">
+            <dt>Version</dt><dd>${escapeHtml(appVersion)}</dd>
+            <dt>Commit</dt><dd>${commitLink}</dd>
+            <dt>Branch</dt><dd>${escapeHtml(branch) || "—"}</dd>
+            <dt>Build Date</dt><dd>${escapeHtml(buildDate) || "—"}</dd>
+          </dl>
+        </div>
+      </details>
     </main>
   </body>
 </html>`;
@@ -155,6 +205,11 @@ async function runBuild() {
     buildNumber = await readAndBumpBuildNumber();
   }
   const appVersion = `0.${buildNumber}`;
+  const gitInfo = {
+    commitSha: process.env.COMMIT_SHA || process.env.GITHUB_SHA || "",
+    branch: process.env.BRANCH || process.env.GITHUB_REF_NAME || "",
+    buildDate: new Date().toISOString().slice(0, 10),
+  };
   const [templateHtml, perkLibraryTemplateHtml, showcaseTemplateHtml, skillsShowcaseTemplateHtml, cssContent, staticPagesCssContent] = await Promise.all([
     readFile(templateHtmlPath, "utf8"),
     readFile(perkLibraryTemplateHtmlPath, "utf8"),
@@ -312,7 +367,7 @@ async function runBuild() {
     keepClosingSlash: true,
   });
 
-  const landingSourceHtml = buildLandingHtml(appVersion);
+  const landingSourceHtml = buildLandingHtml(appVersion, gitInfo);
   const landingHtml = await minify(landingSourceHtml, {
     collapseWhitespace: true,
     removeComments: true,
