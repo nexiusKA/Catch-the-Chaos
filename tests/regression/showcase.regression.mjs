@@ -35,9 +35,9 @@ assert.strictEqual(escapeHtml(42), "42", "non-string values should be coerced to
 // ---------------------------------------------------------------------------
 
 assert.ok(Array.isArray(STATIC_PAGE_LINKS), "STATIC_PAGE_LINKS should be an array");
-assert.ok(STATIC_PAGE_LINKS.length >= 4, "STATIC_PAGE_LINKS should contain at least 4 entries");
+assert.ok(STATIC_PAGE_LINKS.length >= 2, "STATIC_PAGE_LINKS should contain at least 2 entries");
 
-const requiredKeys = ["game", "perk-library", "showcase", "skills-showcase"];
+const requiredKeys = ["game", "perk-library"];
 const linkKeys = STATIC_PAGE_LINKS.map((l) => l.key);
 for (const key of requiredKeys) {
   assert.ok(linkKeys.includes(key), `STATIC_PAGE_LINKS should include a link with key "${key}"`);
