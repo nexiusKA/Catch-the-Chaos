@@ -74,6 +74,11 @@ body {
 
 /* Show buttons on touch-capable / narrow viewports */
 @media (hover: none), (pointer: coarse), (max-width: 600px) {
+  body {
+    /* Reserve space at the bottom so fixed buttons never cover the canvas */
+    padding-bottom: 144px;
+  }
+
   #mobile-controls button {
     display: flex;
     align-items: center;
