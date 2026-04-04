@@ -157,7 +157,7 @@ export class UI {
     ctx.font         = '11px Arial';
     ctx.textAlign    = 'right';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('__VERSION__', W - 8, H - 8);
+    ctx.fillText(__APP_VERSION__, W - 8, H - 8);
 
     ctx.restore();
   }

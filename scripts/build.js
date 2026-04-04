@@ -256,6 +256,7 @@ async function runBuild() {
     target: "es2020",
     legalComments: "none",
     minify: false,
+    define: { __APP_VERSION__: JSON.stringify(appVersion) },
   });
 
   const jsBundle = jsBundleResult.outputFiles[0].text;
