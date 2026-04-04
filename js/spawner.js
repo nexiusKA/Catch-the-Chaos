@@ -1,14 +1,14 @@
-import { rand, randInt, choice, roundRect } from './utils.js';
+import { rand, randInt, choice } from './utils.js';
 import { Drop } from './drop.js';
 
 // ─── Machine definitions ──────────────────────────────────────────────────────
 
 const MACHINE_DEFS = [
-  { name: 'Fart Cannon',    color: '#FF6600', accent: '#FFAA00', shape: 'cannon'  },
-  { name: 'Chaos Pipe',     color: '#44AA44', accent: '#88FF88', shape: 'pipe'    },
-  { name: 'Goofy Machine',  color: '#6644CC', accent: '#BB88FF', shape: 'machine' },
-  { name: 'Cloud Vent',     color: '#88BBFF', accent: '#FFFFFF', shape: 'cloud'   },
-  { name: 'Slime Nozzle',   color: '#AADD00', accent: '#EEFF44', shape: 'pipe'    },
+  { name: 'Orange Tabby', color: '#E8812A', accent: '#FFB347', stroke: '#4A3000', shape: 'cat' },
+  { name: 'Gray Cat',     color: '#8A8A8A', accent: '#FFD0D0', stroke: '#444444', shape: 'cat' },
+  { name: 'Black Cat',    color: '#2C2C2C', accent: '#FF88CC', stroke: '#666666', shape: 'cat' },
+  { name: 'Snow Cat',     color: '#F5F0E8', accent: '#FFD0D0', stroke: '#999999', shape: 'cat' },
+  { name: 'Tabby Cat',    color: '#9B5E3C', accent: '#FFB8A0', stroke: '#4A2800', shape: 'cat' },
 ];
 
 // ─── Spawner class ────────────────────────────────────────────────────────────
@@ -74,9 +74,9 @@ export class Spawner {
         m.puffTimer = 0;
         m.puffs.push({
           ox:   rand(-12, 12),
-          y:    58,
+          y:    70,
           life: 1.0,
-          vy:   rand(-18, -8),
+          vy:   rand(10, 22),
           size: rand(7, 16),
         });
       }
@@ -116,7 +116,8 @@ export class Spawner {
     const m     = choice(this.machines);
     const x     = m.x + rand(-14, 14);
     const speed = this.dropSpeed + rand(-22, 22);
-    const drop  = new Drop(x, speed, this.gameW, this.gameH);
+    // spawn from the cat's rear (screen y ≈ machine centre 42 + relative 28)
+    const drop  = new Drop(x, speed, this.gameW, this.gameH, 70);
     this.drops.push(drop);
 
     m.active         = true;
@@ -125,13 +126,13 @@ export class Spawner {
     // Play a random fart sound on every drop spawn
     if (this.fartSound) this.fartSound.playRandom();
 
-    // Burst of stink puffs from the nozzle
+    // Burst of stink puffs drifting downward from the cat's butt
     for (let i = 0; i < 5; i++) {
       m.puffs.push({
         ox:    rand(-14, 14),
-        y:     58,
+        y:     70,
         life:  1.0,
-        vy:    rand(-35, -15),
+        vy:    rand(20, 45),
         size:  rand(9, 20),
         color: `rgba(${randInt(110, 160)},${randInt(180, 230)},${randInt(40, 90)},`,
       });
@@ -151,14 +152,9 @@ export class Spawner {
     ctx.save();
     ctx.translate(m.x, 42 + bob);
 
-    switch (m.def.shape) {
-      case 'cannon':  this._drawCannon (ctx, m); break;
-      case 'pipe':    this._drawPipe   (ctx, m); break;
-      case 'machine': this._drawMachineBox(ctx, m); break;
-      case 'cloud':   this._drawCloud  (ctx, m); break;
-    }
+    this._drawCat(ctx, m);
 
-    // Puff clouds
+    // Puff clouds drifting downward from the cat's rear
     for (const p of m.puffs) {
       ctx.save();
       ctx.globalAlpha = p.life * 0.5;
@@ -177,149 +173,141 @@ export class Spawner {
     ctx.restore();
   }
 
-  _drawCannon(ctx, m) {
-    const { color, accent } = m.def;
-    const active = m.active;
+  _drawCat(ctx, m) {
+    const { color, accent, stroke } = m.def;
+    const active     = m.active;
+    const t          = m.animTimer;
+    const earWiggle  = active ? Math.sin(t * 10) * 4 : 0;
+    const strokeColor = stroke || '#333';
 
-    ctx.strokeStyle = '#333';
+    ctx.strokeStyle = strokeColor;
     ctx.lineWidth   = 2;
 
-    // Main round body
+    // ── Tail (curled to the right, peeking out beside the body) ──
     ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(0, -10, 23, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-
-    // Barrel (pointing down)
-    ctx.fillStyle = '#333';
-    ctx.fillRect(-8, 6, 16, 32);
-    ctx.strokeRect(-8, 6, 16, 32);
-
-    // Barrel tip flare
-    ctx.fillStyle = active ? '#AAFFAA' : accent;
-    ctx.beginPath(); ctx.ellipse(0, 38, 13, 5, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Bolts
-    ctx.fillStyle = accent;
-    [-11, 11].forEach(ox => {
-      ctx.beginPath(); ctx.arc(ox, -10, 4.5, 0, Math.PI * 2); ctx.fill();
-    });
-
-    // Goofy eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(-7, -15, 5.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( 7, -15, 5.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = active ? '#FF0000' : '#333';
-    ctx.beginPath(); ctx.arc(-5, -14, 3,   0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( 9, -14, 3,   0, Math.PI * 2); ctx.fill();
-
-    // Active smoke burst
-    if (active) {
-      ctx.fillStyle = 'rgba(160,255,140,0.72)';
-      ctx.beginPath(); ctx.arc(0, 46, 11, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
-  _drawPipe(ctx, m) {
-    const { color, accent } = m.def;
-    const active = m.active;
-
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth   = 2.5;
-
-    // Pipe body
-    ctx.fillStyle = color;
-    roundRect(ctx, -11, -32, 22, 62, 11);
+    ctx.beginPath();
+    ctx.ellipse(24, 4, 7, 20, 0.45, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
 
-    // Flange ring
-    ctx.fillStyle = accent;
-    ctx.fillRect(-16, -4, 32, 8);
-    ctx.strokeRect(-16, -4, 32, 8);
-
-    // Nozzle
-    ctx.fillStyle = '#444';
-    ctx.beginPath(); ctx.ellipse(0, 30, 15, 6, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Pressure gauge
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(0, -22, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
-    // Needle
-    const needle = m.animTimer * 0.6;
-    ctx.strokeStyle = active ? '#FF0000' : '#444';
-    ctx.lineWidth   = 2;
+    // ── Body (seated oval) ──
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(0, -22);
-    ctx.lineTo(Math.cos(needle) * 5, -22 + Math.sin(needle) * 5);
+    ctx.ellipse(0, 6, 19, 24, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // ── Head ──
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, -28, 18, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // ── Left ear ──
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(-16, -38 + earWiggle);
+    ctx.lineTo(-7,  -58 + earWiggle);
+    ctx.lineTo(-1,  -38 + earWiggle);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // inner left ear
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(-13, -39 + earWiggle);
+    ctx.lineTo(-7,  -54 + earWiggle);
+    ctx.lineTo(-3,  -39 + earWiggle);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── Right ear ──
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(1,  -38 - earWiggle);
+    ctx.lineTo(10, -58 - earWiggle);
+    ctx.lineTo(16, -38 - earWiggle);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // inner right ear
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(3,  -39 - earWiggle);
+    ctx.lineTo(10, -54 - earWiggle);
+    ctx.lineTo(13, -39 - earWiggle);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── Eyes ──
+    const eyeY = -30;
+    if (active) {
+      // Wide surprised eyes when dropping
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath(); ctx.arc(-7, eyeY, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 7, eyeY, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.arc(-7, eyeY, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 7, eyeY, 3, 0, Math.PI * 2); ctx.fill();
+    } else {
+      // Normal slit-pupil cat eyes
+      ctx.fillStyle = '#7CFC00';
+      ctx.beginPath(); ctx.arc(-7, eyeY, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc( 7, eyeY, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(-7, eyeY, 1.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse( 7, eyeY, 1.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    // Eye shine
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.arc(-9, eyeY - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( 5, eyeY - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // ── Nose ──
+    ctx.fillStyle = accent;
+    ctx.beginPath();
+    ctx.moveTo(-2.5, -24);
+    ctx.lineTo( 2.5, -24);
+    ctx.lineTo( 0,   -21);
+    ctx.closePath();
+    ctx.fill();
+
+    // ── Mouth ──
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, -21);
+    ctx.quadraticCurveTo(-4, -18, -6, -19);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -21);
+    ctx.quadraticCurveTo( 4, -18,  6, -19);
     ctx.stroke();
 
-    // Active drip
-    if (active) {
-      ctx.fillStyle = 'rgba(120,240,120,0.8)';
-      ctx.beginPath(); ctx.arc(0, 38, 8, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
-  _drawMachineBox(ctx, m) {
-    const { color, accent } = m.def;
-    const active = m.active;
-
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth   = 2;
-
-    // Box body
-    ctx.fillStyle = color;
-    roundRect(ctx, -26, -28, 52, 58, 7);
-    ctx.fill(); ctx.stroke();
-
-    // Buttons
-    const btnColors = [accent, '#FF4444', '#44FF44', '#4466FF'];
-    [[-11, -10], [5, -10], [-11, 0], [5, 0]].forEach(([bx, by], i) => {
-      ctx.fillStyle = btnColors[i];
-      ctx.beginPath(); ctx.arc(bx, by, 5.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
+    // ── Whiskers ──
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth   = 1;
+    [[-6, -24, -20, -26], [-6, -22, -20, -22], [-6, -20, -20, -18]].forEach(([x1, y1, x2, y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    });
+    [[ 6, -24,  20, -26], [ 6, -22,  20, -22], [ 6, -20,  20, -18]].forEach(([x1, y1, x2, y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     });
 
-    // Screen
-    ctx.fillStyle = active ? '#00FF88' : '#001122';
-    ctx.fillRect(-20, -25, 40, 18);
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
-    ctx.strokeRect(-20, -25, 40, 18);
+    // ── Front paws ──
+    ctx.fillStyle   = color;
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.ellipse(-10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse( 10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    // ── Active: strain lines near butt ──
     if (active) {
-      ctx.fillStyle    = '#001100';
-      ctx.font         = 'bold 9px monospace';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('CHAOS!', 0, -16);
-      ctx.textBaseline = 'alphabetic';
-    }
-
-    // Output chute
-    ctx.fillStyle = '#333';
-    ctx.fillRect(-9, 28, 18, 10);
-  }
-
-  _drawCloud(ctx, m) {
-    const { color, accent } = m.def;
-    const active = m.active;
-
-    ctx.fillStyle   = active ? accent : color;
-    ctx.strokeStyle = '#aac';
-    ctx.lineWidth   = 2;
-
-    // Cloud puffs
-    [[0, 0, 24], [-20, 9, 17], [20, 9, 17], [-9, 17, 15], [9, 17, 15]].forEach(([px, py, pr]) => {
-      ctx.beginPath(); ctx.arc(px, py - 16, pr, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    });
-
-    // Vent hole
-    ctx.fillStyle = '#6688AA';
-    ctx.beginPath(); ctx.ellipse(0, 8, 11, 5, 0, 0, Math.PI * 2); ctx.fill();
-
-    // Drip on active
-    if (active) {
-      ctx.fillStyle = 'rgba(130,230,130,0.85)';
-      ctx.beginPath(); ctx.arc(0, 16, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(139,115,85,0.65)';
+      ctx.lineWidth   = 2;
+      for (let i = 0; i < 3; i++) {
+        const yOff = 30 + i * 5;
+        ctx.beginPath();
+        ctx.moveTo(-8, yOff);
+        ctx.quadraticCurveTo(0, yOff + 3, 8, yOff);
+        ctx.stroke();
+      }
     }
   }
 }

@@ -32,9 +32,9 @@ export class Drop {
    * @param {number} gameW
    * @param {number} gameH
    */
-  constructor(x, speed, gameW, gameH) {
+  constructor(x, speed, gameW, gameH, spawnY = -32) {
     this.x      = x;
-    this.y      = -32;
+    this.y      = spawnY;
     this.speed  = speed;
     this.gameW  = gameW;
     this.gameH  = gameH;
@@ -154,62 +154,21 @@ export class Drop {
   // ── shape renderers ─────────────────────────────────────────────────────────
 
   _drawPoop(ctx) {
-    const r            = this.size;
-    const c            = this.color;
-    const outlineColor = '#2a0e00';
+    const r        = this.size;
+    const fontSize = Math.round(r * 2.4);
 
-    ctx.strokeStyle = outlineColor;
-    ctx.lineWidth   = 2;
-
-    // Base mound
-    ctx.fillStyle = c;
-    ctx.beginPath();
-    ctx.arc(0, r * 0.28, r * 0.82, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Middle tier (slightly offset for character)
-    ctx.beginPath();
-    ctx.arc(r * 0.08, -r * 0.15, r * 0.58, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Upper tier
-    ctx.beginPath();
-    ctx.arc(-r * 0.04, -r * 0.56, r * 0.36, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Swirly tip
-    ctx.beginPath();
-    ctx.arc(r * 0.06, -r * 0.88, r * 0.21, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Highlight shine
-    ctx.fillStyle = 'rgba(255,210,170,0.32)';
-    ctx.beginPath();
-    ctx.ellipse(-r * 0.22, r * 0.08, r * 0.13, r * 0.27, -0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Eyes
-    const eyeY = r * 0.12;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(-r * 0.28, eyeY, r * 0.16, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r * 0.22, eyeY, r * 0.16, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1a0800';
-    ctx.beginPath(); ctx.arc(-r * 0.23, eyeY + r * 0.04, r * 0.09, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r * 0.27, eyeY + r * 0.04, r * 0.09, 0, Math.PI * 2); ctx.fill();
-
-    // Smile
-    ctx.strokeStyle = '#1a0800';
-    ctx.lineWidth   = 1.5;
-    ctx.beginPath();
-    ctx.arc(0, r * 0.33, r * 0.22, 0.15, Math.PI - 0.15);
-    ctx.stroke();
+    // Draw poop emoji
+    ctx.font         = `${fontSize}px Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💩', 0, 0);
 
     // Animated stink lines above the poop
     ctx.strokeStyle = 'rgba(130,210,50,0.72)';
     ctx.lineWidth   = 1.5;
     const sw = Math.sin(this.age * 5) * 3;
-    [[-r * 0.45, r * 0.72], [0, r * 0.88], [r * 0.45, r * 0.72]].forEach(([sx]) => {
-      const baseY = -r * 1.1;
+    [-r * 0.45, 0, r * 0.45].forEach(sx => {
+      const baseY = -r * 1.3;
       ctx.beginPath();
       ctx.moveTo(sx + sw,      baseY);
       ctx.bezierCurveTo(
@@ -266,68 +225,64 @@ export class Drop {
   _drawSpiky(ctx) {
     const r      = this.size;
     const spikes = 8;
+
+    // Spiky danger ring around the poop
     ctx.fillStyle   = this.color;
     ctx.strokeStyle = '#880000';
     ctx.lineWidth   = 2;
     ctx.beginPath();
     for (let i = 0; i < spikes * 2; i++) {
       const angle  = (i * Math.PI) / spikes;
-      const radius = i % 2 === 0 ? r : r * 0.55;
+      const radius = i % 2 === 0 ? r * 1.5 : r * 0.85;
       const px = Math.cos(angle) * radius;
       const py = Math.sin(angle) * radius;
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    // Angry eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(-r * 0.23, -r * 0.1, 4,   0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r * 0.23, -r * 0.1, 4,   0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(-r * 0.23, -r * 0.1, 2.2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r * 0.23, -r * 0.1, 2.2, 0, Math.PI * 2); ctx.fill();
-    // Frown
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(0, r * 0.15, r * 0.22, Math.PI + 0.2, -0.2);
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
+
+    // 💩 emoji on top
+    const fontSize = Math.round(r * 1.9);
+    ctx.font         = `${fontSize}px Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💩', 0, 0);
   }
 
   _drawOrb(ctx) {
-    const r   = this.size;
-    const grd = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
-    grd.addColorStop(0, '#ffffff');
-    grd.addColorStop(0.35, this.color);
-    grd.addColorStop(1, '#000033');
-    ctx.fillStyle   = grd;
+    const r = this.size;
+
+    // Dashed golden sparkle ring
     ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth   = 2.5;
+    ctx.lineWidth   = 3;
+    ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.arc(0, 0, r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.arc(0, 0, r * 1.3, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Sparkle overlay
-    ctx.save();
-    ctx.rotate(-this.rotation); // counter-rotate so sparkle stays upright
-    this._drawStar(ctx, 4);
-    ctx.restore();
+    // 💩 emoji
+    const fontSize = Math.round(r * 1.9);
+    ctx.font         = `${fontSize}px Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💩', 0, 0);
 
-    // Label text
+    // Powerup label overlaid below the emoji
     const labels = {
-      multiplier: '×2',
+      multiplier:  '×2',
       wide_bucket: '↔',
-      slow_mo: 'SLO',
-      magnet: 'MAG',
-      shield: 'SHD',
+      slow_mo:     'SLO',
+      magnet:      'MAG',
+      shield:      'SHD',
     };
     const label = labels[this.effect] || '?';
-    ctx.fillStyle = '#fff';
-    ctx.font      = `bold ${Math.round(r * 0.6)}px Arial`;
-    ctx.textAlign = 'center';
+    ctx.font         = `bold ${Math.round(r * 0.65)}px Arial`;
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, 0, 0);
+    ctx.strokeStyle  = '#000';
+    ctx.lineWidth    = 3;
+    ctx.strokeText(label, 0, r * 0.85);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(label, 0, r * 0.85);
   }
 }
