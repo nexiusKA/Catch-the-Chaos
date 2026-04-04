@@ -519,7 +519,8 @@ export class Game {
 
   _activateFever() {
     this.feverMode  = true;
-    this.multiplier = this.player.hasPowerup('multiplier') ? 4 : 3;    this.audio.playFeverActivate();
+    this.multiplier = this.player.hasPowerup('multiplier') ? 4 : 3;
+    this.audio.playFeverActivate();
     this.shake.trigger(7, 0.4);
     this.popups.push(
       new PopupText('🔥 FEVER MODE! 🔥', this.width / 2, this.height / 2, '#FF6600', 38)
@@ -683,6 +684,68 @@ export class Game {
     ctx.lineWidth   = 6;
     ctx.globalAlpha = 0.45 + Math.sin(t * 10) * 0.3;
     ctx.strokeRect(3, 3, this.width - 6, this.height - 6);
+    ctx.restore();
+  }
+
+  _drawTornadoOverlay(ctx) {
+    const t   = this._t;
+    const pct = Math.max(0, this.tornadoEventTimer / this.tornadoEventDuration);
+
+    ctx.save();
+    ctx.globalAlpha = 0.06 + Math.sin(t * 9) * 0.03;
+    ctx.fillStyle   = '#AA66FF';
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = '#8844FF';
+    ctx.lineWidth   = 6;
+    ctx.globalAlpha = 0.4 + Math.sin(t * 11) * 0.25;
+    ctx.strokeRect(3, 3, this.width - 6, this.height - 6);
+    ctx.restore();
+
+    const barW = (this.width - 20) * pct;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(10, 76, this.width - 20, 6);
+    ctx.fillStyle = '#AA66FF';
+    ctx.fillRect(10, 76, barW, 6);
+    ctx.fillStyle = '#DDBBFF';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('💨 TORNADO!  DODGE!', this.width / 2, 73);
+    ctx.restore();
+  }
+
+  _drawGoldenRainOverlay(ctx) {
+    const t   = this._t;
+    const pct = Math.max(0, this.goldenRainTimer / this.goldenRainDuration);
+
+    ctx.save();
+    ctx.globalAlpha = 0.06 + Math.sin(t * 8) * 0.03;
+    ctx.fillStyle   = '#FFD700';
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth   = 6;
+    ctx.globalAlpha = 0.4 + Math.sin(t * 10) * 0.25;
+    ctx.strokeRect(3, 3, this.width - 6, this.height - 6);
+    ctx.restore();
+
+    const barW = (this.width - 20) * pct;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(10, 76, this.width - 20, 6);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(10, 76, barW, 6);
+    ctx.fillStyle = '#FFF0A0';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('⭐ GOLDEN RAIN!  ×1 PTS', this.width / 2, 73);
     ctx.restore();
   }
 
