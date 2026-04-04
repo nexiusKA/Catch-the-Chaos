@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build, transform } from "esbuild";
@@ -31,6 +31,8 @@ const outputSkillsShowcaseHtmlPath = path.join(distDir, "skills-showcase.html");
 const outputStaticPagesCssPath = path.join(distDir, "static-pages.css");
 const outputLandingHtmlPath = path.join(distDir, "index.html");
 const legacyPerksDirPath = path.join(distDir, "perks");
+const sourceAssetsPath = path.join(rootDir, "assets");
+const outputAssetsPath = path.join(distDir, "assets");
 
 function escapeHtml(text) {
   return String(text)
@@ -368,6 +370,7 @@ async function runBuild() {
 
   await mkdir(distDir, { recursive: true });
   await rm(legacyPerksDirPath, { recursive: true, force: true });
+  await cp(sourceAssetsPath, outputAssetsPath, { recursive: true });
 
   const perkLibraryParts = buildPerkLibraryParts();
   const perksSourceHtml = perkLibraryTemplateHtml
