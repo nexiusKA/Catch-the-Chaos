@@ -77,6 +77,18 @@ export class Game {
     this.popsCaught         = 0;
     this.pissEventThreshold = 10; // set randomly on startGame
 
+    // Tornado event
+    this.tornadoEventActive   = false;
+    this.tornadoEventTimer    = 0;
+    this.tornadoEventDuration = 14;
+    this.tornadoPopsCounter   = 0;
+    this.tornadoThreshold     = 15;
+
+    // Golden Rain event
+    this.goldenRainActive   = false;
+    this.goldenRainTimer    = 0;
+    this.goldenRainDuration = 12;
+
     // Menu decoration spawner (for background eye-candy)
     this._menuSpawner  = new Spawner(this.width, this.height);
     this._menuSpawner.spawnInterval = 1.2;
@@ -110,6 +122,16 @@ export class Game {
     this.pissEventTimer    = 0;
     this.popsCaught        = 0;
     this.pissEventThreshold = Math.floor(Math.random() * 21) + 10; // 10–30
+
+    // Tornado event reset
+    this.tornadoEventActive  = false;
+    this.tornadoEventTimer   = 0;
+    this.tornadoPopsCounter  = 0;
+    this.tornadoThreshold    = Math.floor(Math.random() * 16) + 15; // 15–30
+
+    // Golden Rain reset
+    this.goldenRainActive = false;
+    this.goldenRainTimer  = 0;
 
     this.player  = new Player(this.width, this.height);
     this.spawner = new Spawner(this.width, this.height, this.fartSound, this.sndPiss);
@@ -187,6 +209,24 @@ export class Game {
       this.pissEventTimer -= dt;
       if (this.pissEventTimer <= 0) {
         this._endPissEvent();
+      }
+    }
+
+    // Tornado event countdown
+    this.spawner.tornadoMode = this.tornadoEventActive;
+    if (this.tornadoEventActive) {
+      this.tornadoEventTimer -= dt;
+      if (this.tornadoEventTimer <= 0) {
+        this._endTornadoEvent();
+      }
+    }
+
+    // Golden Rain countdown
+    this.spawner.goldenRainMode = this.goldenRainActive;
+    if (this.goldenRainActive) {
+      this.goldenRainTimer -= dt;
+      if (this.goldenRainTimer <= 0) {
+        this._endGoldenRain();
       }
     }
 
@@ -280,6 +320,20 @@ export class Game {
         }
       }
 
+      // Tornado event trigger (independent counter, not during piss/golden rain)
+      if (!this.pissEventActive && !this.tornadoEventActive && !this.goldenRainActive) {
+        this.tornadoPopsCounter++;
+        if (this.tornadoPopsCounter >= this.tornadoThreshold) {
+          this._triggerTornadoEvent();
+        }
+      }
+
+      // Golden Rain trigger on combo milestone (every 15 consecutive catches)
+      if (this.combo > 0 && this.combo % 15 === 0 &&
+          !this.goldenRainActive && !this.pissEventActive && !this.tornadoEventActive) {
+        this._triggerGoldenRain();
+      }
+
     } else if (drop.type === DROP_TYPES.PISS) {
       // Catch during piss event — ×3 bonus points
       const pts = drop.points * 3;
@@ -292,8 +346,30 @@ export class Game {
       this.popups.push(new PopupText(`×3  +${pts}`, px, py - 20, '#FFE840', 24));
       this.player.squishCatch();
 
+    } else if (drop.type === DROP_TYPES.GOLDEN) {
+      // Golden Rain drop — high value, charges fever faster
+      const pts = drop.points * this.multiplier;
+      this.score += pts;
+      this.combo++;
+      if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+      this.feverMeter = Math.min(this.feverMax, this.feverMeter + 2);
+      if (this.feverMeter >= this.feverMax && !this.feverMode) {
+        this._activateFever();
+      }
+
+      this.particles.burst(px, py, ['#FFD700', '#FFEE00', '#FFF0A0', '#FFFFFF'], 20);
+      this.audio.playSpecial();
+      this.popups.push(new PopupText(`⭐ +${pts}`, px, py - 20, '#FFD700', 26));
+      this.player.squishCatch();
+
     } else if (drop.type === DROP_TYPES.BAD) {
-      if (this.player.hasPowerup('shield')) {
+      if (this.player.hasPowerup('ghost')) {
+        // Ghost: phase right through the bad drop
+        this.particles.burst(px, py, ['#FFFFFF', '#AAAAFF', '#DDDDFF'], 10);
+        this.popups.push(new PopupText('👻 PHASED!', px, py - 20, '#DDDDFF', 22));
+        this.audio.playCatch();
+      } else if (this.player.hasPowerup('shield')) {
         // Shield absorbs it
         delete this.player.powerups['shield'];
         this.particles.burst(px, py, ['#00FFFF', '#0088FF', '#FFFFFF'], 14);
@@ -305,7 +381,17 @@ export class Game {
       }
 
     } else {
-      // SPECIAL
+      // SPECIAL powerup drop
+      if (drop.effect === 'extra_life') {
+        // Instant +1 life — not a timed perk
+        this.lives = Math.min(this.lives + 1, 6);
+        this.particles.burst(px, py, ['#FF4488', '#FF88BB', '#FFFFFF', '#FFD700'], 22);
+        this.shake.trigger(3, 0.15);
+        this.audio.playSpecial();
+        this.popups.push(new PopupText('❤ EXTRA LIFE!', px, py - 20, '#FF4488', 28));
+        return;
+      }
+
       this.player.applyPowerup(drop.effect);
       if (drop.effect === 'multiplier') {
         this.multiplier = 2;
@@ -320,6 +406,8 @@ export class Game {
         slow_mo:     'SLOW-MO!',
         magnet:      'MAGNET!',
         shield:      'SHIELD UP!',
+        speed_boost: 'TURBO! ⚡',
+        ghost:       'GHOST! 👻',
       };
       this.popups.push(new PopupText(names[drop.effect] || 'BONUS!', px, py - 20, '#FFD700', 26));
     }
@@ -381,6 +469,54 @@ export class Game {
     );
   }
 
+  _triggerTornadoEvent() {
+    this.tornadoEventActive  = true;
+    this.tornadoEventTimer   = this.tornadoEventDuration;
+    this.spawner.tornadoMode = true;
+
+    this.shake.trigger(10, 0.5);
+    this.particles.burst(this.width / 2, this.height / 2,
+      ['#8844FF', '#AA66FF', '#DDBBFF', '#FFFFFF'], 26);
+    this.popups.push(
+      new PopupText('💨 TORNADO! 💨', this.width / 2, this.height / 2, '#BB88FF', 38)
+    );
+  }
+
+  _endTornadoEvent() {
+    this.tornadoEventActive  = false;
+    this.spawner.tornadoMode = false;
+    this.tornadoPopsCounter  = 0;
+    this.tornadoThreshold    = Math.floor(Math.random() * 16) + 15; // 15–30
+
+    this.popups.push(
+      new PopupText('Storm passed…', this.width / 2, this.height / 2 + 40, '#AAAAFF', 22)
+    );
+  }
+
+  _triggerGoldenRain() {
+    this.goldenRainActive       = true;
+    this.goldenRainTimer        = this.goldenRainDuration;
+    this.spawner.goldenRainMode = true;
+    this.spawner.drops          = []; // clear existing drops for pure golden rain
+
+    this.shake.trigger(8, 0.4);
+    this.particles.burst(this.width / 2, this.height / 2,
+      ['#FFD700', '#FFEE00', '#FFF0A0', '#FFFFFF'], 30);
+    this.popups.push(
+      new PopupText('⭐ GOLDEN RAIN! ⭐', this.width / 2, this.height / 2, '#FFD700', 36)
+    );
+  }
+
+  _endGoldenRain() {
+    this.goldenRainActive       = false;
+    this.spawner.goldenRainMode = false;
+    this.spawner.drops          = [];
+
+    this.popups.push(
+      new PopupText('Rain dried up…', this.width / 2, this.height / 2 + 40, '#FFCC44', 22)
+    );
+  }
+
   _activateFever() {
     this.feverMode  = true;
     this.multiplier = this.player.hasPowerup('multiplier') ? 4 : 3;    this.audio.playFeverActivate();
@@ -427,6 +563,8 @@ export class Game {
 
       if (this.feverMode) this._drawFeverOverlay(ctx);
       if (this.pissEventActive) this._drawPissOverlay(ctx);
+      if (this.tornadoEventActive) this._drawTornadoOverlay(ctx);
+      if (this.goldenRainActive) this._drawGoldenRainOverlay(ctx);
       if (this.state === STATES.GAME_OVER) this.ui.drawGameOver(ctx, this._t);
     }
 
@@ -442,6 +580,12 @@ export class Game {
     if (this.pissEventActive) {
       sky.addColorStop(0, '#2a2800');
       sky.addColorStop(1, '#1a1800');
+    } else if (this.tornadoEventActive) {
+      sky.addColorStop(0, '#1a0a2e');
+      sky.addColorStop(1, '#280a3a');
+    } else if (this.goldenRainActive) {
+      sky.addColorStop(0, '#2a2200');
+      sky.addColorStop(1, '#1a1600');
     } else if (this.feverMode) {
       sky.addColorStop(0, '#330022');
       sky.addColorStop(1, '#110033');

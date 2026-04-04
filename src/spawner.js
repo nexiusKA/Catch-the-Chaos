@@ -20,7 +20,9 @@ export class Spawner {
 
     this.fartSound = fartSound;
     this.pissSound = pissSound;
-    this.pissMode  = false;
+    this.pissMode       = false;
+    this.tornadoMode    = false;
+    this.goldenRainMode = false;
     this.drops = [];
 
     // Build machines
@@ -115,6 +117,12 @@ export class Spawner {
     for (const d of this.drops) {
       d.update(dt, slowFactor);
 
+      // Tornado: drops zigzag aggressively left and right
+      if (this.tornadoMode) {
+        const zigzag = Math.cos(d.age * d.wobbleSpeed * 2.5) * 120 * dt;
+        d.x = Math.max(20, Math.min(this.gameW - 20, d.x + zigzag));
+      }
+
       // Magnet: pull good drops toward player
       if (magnetActive && magnetCenter && d.type === 'good') {
         const dx   = magnetCenter.x - d.x;
@@ -134,7 +142,9 @@ export class Spawner {
     const x     = m.x + rand(-14, 14);
     const speed = this.dropSpeed + rand(-22, 22);
     // spawn from the cat's rear (screen y ≈ machine centre 42 + relative 28)
-    const forceType = this.pissMode ? DROP_TYPES.PISS : null;
+    const forceType = this.pissMode       ? DROP_TYPES.PISS
+                    : this.goldenRainMode ? DROP_TYPES.GOLDEN
+                    : null;
     const drop  = new Drop(x, speed, this.gameW, this.gameH, 70, forceType);
     this.drops.push(drop);
 

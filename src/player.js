@@ -51,12 +51,13 @@ export class Player {
   // ── Update ────────────────────────────────────────────────────────────────
 
   update(dt, input) {
-    // Horizontal acceleration
+    // Horizontal acceleration — speed_boost perk multiplies top speed
+    const spd = this.hasPowerup('speed_boost') ? this.speed * 1.58 : this.speed;
     let targetVx = 0;
-    if (input.isDown('ArrowLeft', 'KeyA'))  targetVx = -this.speed;
-    if (input.isDown('ArrowRight', 'KeyD')) targetVx =  this.speed;
+    if (input.isDown('ArrowLeft', 'KeyA'))  targetVx = -spd;
+    if (input.isDown('ArrowRight', 'KeyD')) targetVx =  spd;
 
-    const blend = Math.min(1, (this.acceleration / this.speed) * dt);
+    const blend = Math.min(1, (this.acceleration / spd) * dt);
     this.vx = lerp(this.vx, targetVx, blend);
     this.x  = clamp(this.x + this.vx * dt, 30, this.gameW - 30);
 
@@ -131,6 +132,38 @@ export class Player {
       ctx.beginPath();
       ctx.arc(cx, cy - 14, 50, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // Ghost aura — white translucent glow
+    if (this.hasPowerup('ghost')) {
+      ctx.save();
+      ctx.globalAlpha = 0.25 + Math.sin(Date.now() / 150) * 0.15;
+      ctx.fillStyle   = '#EEEEFF';
+      ctx.beginPath();
+      ctx.arc(cx, cy - 14, 54, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Speed-boost sparks — cyan streaks on each side
+    if (this.hasPowerup('speed_boost')) {
+      ctx.save();
+      ctx.strokeStyle = '#00FFFF';
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap     = 'round';
+      ctx.globalAlpha = 0.55 + Math.sin(Date.now() / 90) * 0.35;
+      for (let i = 0; i < 3; i++) {
+        const oy = -18 + i * 14;
+        ctx.beginPath();
+        ctx.moveTo(cx - 28, cy + oy);
+        ctx.lineTo(cx - 46, cy + oy - 4 + (i % 2) * 8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx + 28, cy + oy);
+        ctx.lineTo(cx + 46, cy + oy - 4 + (i % 2) * 8);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -381,6 +414,8 @@ export class Player {
       slow_mo:     { label: 'SLO', color: '#AAFFAA' },
       magnet:      { label: 'MAG', color: '#FF88FF' },
       shield:      { label: 'SHD', color: '#00FFFF' },
+      speed_boost: { label: 'SPD', color: '#00EEFF' },
+      ghost:       { label: 'GHO', color: '#DDDDFF' },
     };
 
     const active = Object.keys(this.powerups).filter(k => this.powerups[k] > 0);
