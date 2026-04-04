@@ -1,4 +1,5 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build, transform } from "esbuild";
@@ -126,7 +127,30 @@ ${cards}
   return { navItems, sections };
 }
 
-function buildLandingHtml(appVersion) {
+function getGitInfo() {
+  const run = (cmd) => {
+    try {
+      return execSync(cmd, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim();
+    } catch {
+      return null;
+    }
+  };
+  return {
+    commit: run("git rev-parse --short HEAD"),
+    branch: run("git rev-parse --abbrev-ref HEAD"),
+  };
+}
+
+function buildLandingHtml(appVersion, buildInfo) {
+  const { commit, branch, buildDate } = buildInfo;
+  const metaRows = [
+    commit && `<tr><td>Commit</td><td><code>${escapeHtml(commit)}</code></td></tr>`,
+    branch && `<tr><td>Branch</td><td><code>${escapeHtml(branch)}</code></td></tr>`,
+    buildDate && `<tr><td>Built</td><td>${escapeHtml(buildDate)}</td></tr>`,
+  ]
+    .filter(Boolean)
+    .join("\n        ");
+
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -187,10 +211,38 @@ function buildLandingHtml(appVersion) {
         border-color: var(--accent);
         color: var(--accent);
       }
-      .meta {
-        margin-top: 14px;
-        font-size: 0.85rem;
+      .version-badge {
+        display: inline-block;
+        margin: 14px 0 6px;
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .build-meta {
+        margin-top: 10px;
+        border-top: 1px solid var(--border);
+        padding-top: 10px;
+      }
+      .build-meta table {
+        border-collapse: collapse;
+        font-size: 0.82rem;
         color: var(--muted);
+        width: 100%;
+      }
+      .build-meta td {
+        padding: 3px 8px 3px 0;
+        vertical-align: top;
+      }
+      .build-meta td:first-child {
+        white-space: nowrap;
+        opacity: 0.7;
+        width: 4.5rem;
+      }
+      .build-meta code {
+        font-family: "Consolas", "Cascadia Code", monospace;
+        color: var(--text);
       }
     </style>
   </head>
@@ -205,7 +257,12 @@ function buildLandingHtml(appVersion) {
         <a href="./skills-showcase.html">Skill Showcase</a>
         <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
       </div>
-      <div class="meta">Build version ${escapeHtml(appVersion)}</div>
+      <div class="version-badge">v${escapeHtml(appVersion)}</div>
+      <div class="build-meta">
+        <table>
+        ${metaRows}
+        </table>
+      </div>
     </main>
   </body>
 </html>`;
@@ -240,6 +297,9 @@ async function runBuild() {
     buildNumber = await readAndBumpBuildNumber();
   }
   const appVersion = `0.${buildNumber}`;
+  const gitInfo = getGitInfo();
+  const buildDate = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  const buildInfo = { ...gitInfo, buildDate };
   const [templateHtml, perkLibraryTemplateHtml, showcaseTemplateHtml, skillsShowcaseTemplateHtml, cssContent, staticPagesCssContent] = await Promise.all([
     readFile(templateHtmlPath, "utf8"),
     readFile(perkLibraryTemplateHtmlPath, "utf8"),
@@ -398,7 +458,7 @@ async function runBuild() {
     keepClosingSlash: true,
   });
 
-  const landingSourceHtml = buildLandingHtml(appVersion);
+  const landingSourceHtml = buildLandingHtml(appVersion, buildInfo);
   const landingHtml = await minify(landingSourceHtml, {
     collapseWhitespace: true,
     removeComments: true,
