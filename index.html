@@ -176,8 +176,8 @@
   <script>
     // Set version text only when placeholder has been replaced by the build
     (function() {
-      var v = "v__APP_VERSION__";
-      if (v.indexOf("__") === -1) {
+      const v = "v__APP_VERSION__";
+      if (!v.includes("__")) {
         document.getElementById("app-version").textContent = v;
       }
     })();
