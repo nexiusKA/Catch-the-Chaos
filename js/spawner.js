@@ -194,6 +194,7 @@ export class Spawner {
     const bob = Math.sin(m.animTimer) * 3;
     ctx.save();
     ctx.translate(m.x, 42 + bob + m.jumpY);
+
     this._drawCat(ctx, m);
 
     // Puff clouds drifting downward from the cat's rear
