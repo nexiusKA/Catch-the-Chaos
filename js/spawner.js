@@ -1,4 +1,4 @@
-import { rand, choice, roundRect } from './utils.js';
+import { rand, randInt, choice, roundRect } from './utils.js';
 import { Drop } from './drop.js';
 
 // ─── Machine definitions ──────────────────────────────────────────────────────
@@ -14,10 +14,11 @@ const MACHINE_DEFS = [
 // ─── Spawner class ────────────────────────────────────────────────────────────
 
 export class Spawner {
-  constructor(gameW, gameH) {
+  constructor(gameW, gameH, fartSound = null) {
     this.gameW = gameW;
     this.gameH = gameH;
 
+    this.fartSound = fartSound;
     this.drops = [];
 
     // Build machines
@@ -118,8 +119,23 @@ export class Spawner {
     const drop  = new Drop(x, speed, this.gameW, this.gameH);
     this.drops.push(drop);
 
-    m.active        = true;
+    m.active         = true;
     m.activeCooldown = 0.22;
+
+    // Play a random fart sound on every drop spawn
+    if (this.fartSound) this.fartSound.playRandom();
+
+    // Burst of stink puffs from the nozzle
+    for (let i = 0; i < 5; i++) {
+      m.puffs.push({
+        ox:    rand(-14, 14),
+        y:     58,
+        life:  1.0,
+        vy:    rand(-35, -15),
+        size:  rand(9, 20),
+        color: `rgba(${randInt(110, 160)},${randInt(180, 230)},${randInt(40, 90)},`,
+      });
+    }
   }
 
   // ── Draw machines ────────────────────────────────────────────────────────────
@@ -145,8 +161,13 @@ export class Spawner {
     // Puff clouds
     for (const p of m.puffs) {
       ctx.save();
-      ctx.globalAlpha = p.life * 0.45;
-      ctx.fillStyle   = '#AAFFAA';
+      ctx.globalAlpha = p.life * 0.5;
+      if (p.color) {
+        ctx.fillStyle = p.color + (p.life * 0.5).toFixed(2) + ')';
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = '#AAFFAA';
+      }
       ctx.beginPath();
       ctx.arc(p.ox, p.y - 42 - bob, p.size, 0, Math.PI * 2);
       ctx.fill();
