@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { build, transform } from "esbuild";
@@ -17,6 +17,8 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 
 const distDir = path.join(rootDir, "dist");
+const assetsDir = path.join(rootDir, "assets");
+const distAssetsDir = path.join(distDir, "assets");
 const templateHtmlPath = path.join(rootDir, "src", "index.template.html");
 const perkLibraryTemplateHtmlPath = path.join(rootDir, "src", "perk-library.template.html");
 const sourceCssPath = path.join(rootDir, "src", "style.css");
@@ -294,6 +296,7 @@ async function runBuild() {
 
   await mkdir(distDir, { recursive: true });
   await rm(legacyPerksDirPath, { recursive: true, force: true });
+  await cp(assetsDir, distAssetsDir, { recursive: true });
 
   const perkLibraryParts = buildPerkLibraryParts(skillPerkCatalog);
   const perksSourceHtml = perkLibraryTemplateHtml
