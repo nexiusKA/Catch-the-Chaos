@@ -3,9 +3,10 @@ import { rand, randInt, roundRect } from './utils.js';
 // ─── Drop types ──────────────────────────────────────────────────────────────
 
 export const DROP_TYPES = Object.freeze({
-  GOOD: 'good',
-  BAD: 'bad',
+  GOOD:    'good',
+  BAD:     'bad',
   SPECIAL: 'special',
+  PISS:    'piss',
 });
 
 export const SPECIAL_EFFECTS = Object.freeze({
@@ -31,8 +32,10 @@ export class Drop {
    * @param {number} speed    fall speed in px/s
    * @param {number} gameW
    * @param {number} gameH
+   * @param {number} [spawnY=-32]
+   * @param {string|null} [forceType=null]  force a specific DROP_TYPES value
    */
-  constructor(x, speed, gameW, gameH, spawnY = -32) {
+  constructor(x, speed, gameW, gameH, spawnY = -32, forceType = null) {
     this.x      = x;
     this.y      = spawnY;
     this.speed  = speed;
@@ -50,7 +53,9 @@ export class Drop {
 
     // Weighted type selection
     const roll = Math.random();
-    if (roll < 0.58) {
+    if (forceType) {
+      this.type = forceType;
+    } else if (roll < 0.58) {
       this.type = DROP_TYPES.GOOD;
     } else if (roll < 0.82) {
       this.type = DROP_TYPES.BAD;
@@ -75,6 +80,13 @@ export class Drop {
       this.shape     = 3; // spiky
       this.glowColor = '#FF0000';
       this.points    = 0;
+
+    } else if (this.type === DROP_TYPES.PISS) {
+      this.color     = '#FFD700';
+      this.size      = rand(12, 20);
+      this.shape     = 5; // piss droplet
+      this.glowColor = '#FFEE44';
+      this.points    = 15;
 
     } else {
       // Special
@@ -145,6 +157,13 @@ export class Drop {
       case 1: this._drawCapsule(ctx); break;
       case 2: this._drawStar(ctx, 5); break;
       case 3: this._drawSpiky(ctx);   break;
+      case 5:
+        ctx.save();
+        ctx.rotate(-this.rotation); // keep droplet upright
+        ctx.scale(1, 1 + Math.sin(this.age * 7) * 0.06);
+        this._drawPissDroplet(ctx);
+        ctx.restore();
+        break;
       default: this._drawOrb(ctx);    break;
     }
 
@@ -284,5 +303,36 @@ export class Drop {
     ctx.strokeText(label, 0, r * 0.85);
     ctx.fillStyle = '#FFD700';
     ctx.fillText(label, 0, r * 0.85);
+  }
+
+  _drawPissDroplet(ctx) {
+    const r = this.size;
+
+    // Yellow teardrop shape
+    ctx.fillStyle   = '#FFE000';
+    ctx.strokeStyle = '#BB8800';
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, r * 0.1, r * 0.75, 0, Math.PI * 2);
+    // pointed tip at top
+    ctx.moveTo(-r * 0.35, -r * 0.15);
+    ctx.quadraticCurveTo(0, -r * 1.15, r * 0.35, -r * 0.15);
+    ctx.arc(0, r * 0.1, r * 0.75, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Shine highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.18, -r * 0.2, r * 0.2, r * 0.35, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 💦 emoji
+    const fontSize = Math.round(r * 1.6);
+    ctx.font         = `${fontSize}px Arial, sans-serif`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('💦', 0, r * 0.1);
   }
 }

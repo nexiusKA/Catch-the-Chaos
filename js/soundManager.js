@@ -1,3 +1,37 @@
+// ─── Generic single-file sound player ────────────────────────────────────────
+
+export class SoundPlayer {
+  constructor(url) {
+    this._url    = url;
+    this._ctx    = null;
+    this._buffer = null;
+    this._loaded = false;
+  }
+
+  init(ctx) {
+    if (this._loaded || !ctx) return;
+    this._ctx = ctx;
+    fetch(this._url)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); })
+      .then(buf => ctx.decodeAudioData(buf))
+      .then(decoded => { this._buffer = decoded; this._loaded = true; })
+      .catch(() => {});
+  }
+
+  play(volume = 0.7, playbackRate = 1.0) {
+    if (!this._loaded || !this._ctx) return;
+    if (this._ctx.state === 'suspended') this._ctx.resume();
+    const source = this._ctx.createBufferSource();
+    source.buffer = this._buffer;
+    source.playbackRate.value = playbackRate;
+    const gain = this._ctx.createGain();
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(this._ctx.destination);
+    source.start();
+  }
+}
+
 // ─── Fart Sound Manager ──────────────────────────────────────────────────────
 
 const FART_SOUND_FILES = [

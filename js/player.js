@@ -19,6 +19,9 @@ export class Player {
     this.baseBucketW = 72;
     this.bucketH     = 32;
 
+    // Piss event: replace bucket with a big tea cup
+    this.pissModeActive = false;
+
     // Active powerup timers  { effectName: secondsRemaining }
     this.powerups = {};
 
@@ -41,6 +44,7 @@ export class Player {
   }
 
   get effectiveBucketW() {
+    if (this.pissModeActive) return this.baseBucketW * 2.0; // big tea cup
     return this.hasPowerup('wide_bucket') ? this.baseBucketW * 1.75 : this.baseBucketW;
   }
 
@@ -173,33 +177,37 @@ export class Player {
     }
     ctx.stroke();
 
-    // ── Bucket ──
-    ctx.fillStyle   = '#FF9900';
-    ctx.strokeStyle = '#884400';
-    ctx.lineWidth   = 2;
-    // Trapezoidal body
-    ctx.beginPath();
-    ctx.moveTo(-bw / 2 + 6, 7);
-    ctx.lineTo( bw / 2 - 6, 7);
-    ctx.lineTo( bw / 2,     7 + bh);
-    ctx.lineTo(-bw / 2,     7 + bh);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    // Rim
-    ctx.fillStyle = '#FFBB44';
-    ctx.fillRect(-bw / 2 + 3, 5, bw - 6, 6);
-    ctx.strokeStyle = '#884400';
-    ctx.strokeRect(-bw / 2 + 3, 5, bw - 6, 6);
-    // Handle arc
-    ctx.strokeStyle = '#AA6600';
-    ctx.lineWidth   = 2;
-    ctx.beginPath();
-    ctx.arc(0, 5, bw * 0.28, Math.PI, 0);
-    ctx.stroke();
-    // Inner highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(-bw / 2 + 8, 13, bw - 16, bh - 6);
+    // ── Bucket / Tea Cup ──
+    if (this.pissModeActive) {
+      this._drawTeaCup(ctx, bw, bh);
+    } else {
+      ctx.fillStyle   = '#FF9900';
+      ctx.strokeStyle = '#884400';
+      ctx.lineWidth   = 2;
+      // Trapezoidal body
+      ctx.beginPath();
+      ctx.moveTo(-bw / 2 + 6, 7);
+      ctx.lineTo( bw / 2 - 6, 7);
+      ctx.lineTo( bw / 2,     7 + bh);
+      ctx.lineTo(-bw / 2,     7 + bh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Rim
+      ctx.fillStyle = '#FFBB44';
+      ctx.fillRect(-bw / 2 + 3, 5, bw - 6, 6);
+      ctx.strokeStyle = '#884400';
+      ctx.strokeRect(-bw / 2 + 3, 5, bw - 6, 6);
+      // Handle arc
+      ctx.strokeStyle = '#AA6600';
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.arc(0, 5, bw * 0.28, Math.PI, 0);
+      ctx.stroke();
+      // Inner highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fillRect(-bw / 2 + 8, 13, bw - 16, bh - 6);
+    }
 
     // ── Head ──
     ctx.fillStyle = stinking ? '#d4c070' : '#FFD27F'; // slightly green-tinted when stinking
@@ -257,6 +265,58 @@ export class Player {
       ctx.arc(0, -26, 9, 0.15, Math.PI - 0.15);
       ctx.stroke();
     }
+  }
+
+  /** Big decorative tea cup drawn in place of the normal bucket during the piss event. */
+  _drawTeaCup(ctx, bw, bh) {
+    const cupH = bh + 8;
+
+    // Cup body (slightly rounded trapezoid)
+    ctx.fillStyle   = '#F5F0E0';
+    ctx.strokeStyle = '#B8A060';
+    ctx.lineWidth   = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-bw / 2 + 8, 7);
+    ctx.lineTo( bw / 2 - 8, 7);
+    ctx.lineTo( bw / 2 + 4, 7 + cupH);
+    ctx.lineTo(-bw / 2 - 4, 7 + cupH);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Rim
+    ctx.fillStyle   = '#EDE0B8';
+    ctx.strokeStyle = '#B8A060';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 7, bw / 2 + 2, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Floral decoration
+    ctx.fillStyle = 'rgba(220,80,120,0.55)';
+    ctx.beginPath(); ctx.arc(-bw * 0.18, 18, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( bw * 0.18, 18, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(80,180,80,0.45)';
+    ctx.beginPath(); ctx.arc(0, 20, 3, 0, Math.PI * 2); ctx.fill();
+
+    // Handle (right side)
+    ctx.strokeStyle = '#B8A060';
+    ctx.lineWidth   = 4;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.arc(bw / 2 + 10, 16, 10, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+
+    // Inner highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(-bw / 2 + 10, 14, bw - 18, cupH - 8);
+
+    // 🍵 emoji inside the cup
+    ctx.font         = `${Math.round(bw * 0.35)}px Arial`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🍵', 0, 14 + cupH * 0.35);
   }
 
   /** Animated green stink cloud floating above the player. */
