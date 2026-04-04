@@ -152,6 +152,13 @@ export class UI {
     // Legend
     this._drawLegend(ctx, W / 2, H * 0.82);
 
+    // Version tag (bottom-right)
+    ctx.fillStyle    = 'rgba(255,255,255,0.35)';
+    ctx.font         = '11px Arial';
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('__VERSION__', W - 8, H - 8);
+
     ctx.restore();
   }
 

@@ -16,24 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get next version
+      - name: Get version from package.json
         id: version
         run: |
-          # Get the latest release tag
-          LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "v0.0")
-
-          # Extract version numbers
-          if [[ $LATEST_TAG == v0.* ]]; then
-            MINOR=${LATEST_TAG#v0.}
-            NEXT_MINOR=$((MINOR + 1))
-            NEXT_VERSION="v0.$NEXT_MINOR"
-          else
-            NEXT_VERSION="v0.1"
-          fi
-
-          echo "next_version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION=$(node -p "require('./package.json').version")
+          echo "next_version=v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create release
         run: |
