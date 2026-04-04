@@ -1,5 +1,5 @@
 import { rand, randInt, choice } from './utils.js';
-import { Drop } from './drop.js';
+import { Drop, DROP_TYPES } from './drop.js';
 
 // ─── Machine definitions ──────────────────────────────────────────────────────
 
@@ -14,11 +14,13 @@ const MACHINE_DEFS = [
 // ─── Spawner class ────────────────────────────────────────────────────────────
 
 export class Spawner {
-  constructor(gameW, gameH, fartSound = null) {
+  constructor(gameW, gameH, fartSound = null, pissSound = null) {
     this.gameW = gameW;
     this.gameH = gameH;
 
     this.fartSound = fartSound;
+    this.pissSound = pissSound;
+    this.pissMode  = false;
     this.drops = [];
 
     // Build machines
@@ -132,30 +134,51 @@ export class Spawner {
     const x     = m.x + rand(-14, 14);
     const speed = this.dropSpeed + rand(-22, 22);
     // spawn from the cat's rear (screen y ≈ machine centre 42 + relative 28)
-    const drop  = new Drop(x, speed, this.gameW, this.gameH, 70);
+    const forceType = this.pissMode ? DROP_TYPES.PISS : null;
+    const drop  = new Drop(x, speed, this.gameW, this.gameH, 70, forceType);
     this.drops.push(drop);
 
     m.active         = true;
     m.activeCooldown = 0.22;
 
-    // Fart-jump: cat leaps upward when releasing a drop
-    m.jumpY     = 0;
-    m.jumpVY    = -120;  // launch upward ~18 px peak
-    m.jumpTimer = 0.8;   // safety cap; stops when it lands back
+    if (this.pissMode) {
+      // Happy continuous bouncing — kick off a new jump every spawn
+      m.jumpY     = 0;
+      m.jumpVY    = -160;  // higher, happier jump
+      m.jumpTimer = 1.0;
+      if (this.pissSound) this.pissSound.play(0.55, 0.9 + Math.random() * 0.2);
 
-    // Play a random fart sound on every drop spawn
-    if (this.fartSound) this.fartSound.playRandom();
+      // Burst of yellow piss puffs
+      for (let i = 0; i < 6; i++) {
+        m.puffs.push({
+          ox:    rand(-10, 10),
+          y:     70,
+          life:  1.0,
+          vy:    rand(25, 55),
+          size:  rand(5, 14),
+          color: `rgba(${randInt(220, 255)},${randInt(200, 240)},${randInt(0, 60)},`,
+        });
+      }
+    } else {
+      // Fart-jump: cat leaps upward when releasing a drop
+      m.jumpY     = 0;
+      m.jumpVY    = -120;  // launch upward ~18 px peak
+      m.jumpTimer = 0.8;   // safety cap; stops when it lands back
 
-    // Burst of stink puffs drifting downward from the cat's butt
-    for (let i = 0; i < 5; i++) {
-      m.puffs.push({
-        ox:    rand(-14, 14),
-        y:     70,
-        life:  1.0,
-        vy:    rand(20, 45),
-        size:  rand(9, 20),
-        color: `rgba(${randInt(110, 160)},${randInt(180, 230)},${randInt(40, 90)},`,
-      });
+      // Play a random fart sound on every drop spawn
+      if (this.fartSound) this.fartSound.playRandom();
+
+      // Burst of stink puffs drifting downward from the cat's butt
+      for (let i = 0; i < 5; i++) {
+        m.puffs.push({
+          ox:    rand(-14, 14),
+          y:     70,
+          life:  1.0,
+          vy:    rand(20, 45),
+          size:  rand(9, 20),
+          color: `rgba(${randInt(110, 160)},${randInt(180, 230)},${randInt(40, 90)},`,
+        });
+      }
     }
   }
 
@@ -171,7 +194,6 @@ export class Spawner {
     const bob = Math.sin(m.animTimer) * 3;
     ctx.save();
     ctx.translate(m.x, 42 + bob + m.jumpY);
-
     this._drawCat(ctx, m);
 
     // Puff clouds drifting downward from the cat's rear
@@ -195,9 +217,10 @@ export class Spawner {
 
   _drawCat(ctx, m) {
     const { color, accent, stroke } = m.def;
-    const active     = m.active;
-    const t          = m.animTimer;
-    const earWiggle  = active ? Math.sin(t * 10) * 4 : 0;
+    const active      = m.active;
+    const pissing     = this.pissMode;
+    const t           = m.animTimer;
+    const earWiggle   = (active || pissing) ? Math.sin(t * 10) * 6 : 0;
     const strokeColor = stroke || '#333';
 
     ctx.strokeStyle = strokeColor;
@@ -257,7 +280,14 @@ export class Spawner {
 
     // ── Eyes ──
     const eyeY = -30;
-    if (active) {
+    if (pissing) {
+      // Happy squinted eyes (^_^ style arcs) while peeing
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap     = 'round';
+      ctx.beginPath(); ctx.arc(-7, eyeY, 5, Math.PI, 0); ctx.stroke();
+      ctx.beginPath(); ctx.arc( 7, eyeY, 5, Math.PI, 0); ctx.stroke();
+    } else if (active) {
       // Wide surprised eyes when dropping
       ctx.fillStyle = '#FFD700';
       ctx.beginPath(); ctx.arc(-7, eyeY, 6, 0, Math.PI * 2); ctx.fill();
@@ -291,14 +321,21 @@ export class Spawner {
     // ── Mouth ──
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth   = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(0, -21);
-    ctx.quadraticCurveTo(-4, -18, -6, -19);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, -21);
-    ctx.quadraticCurveTo( 4, -18,  6, -19);
-    ctx.stroke();
+    if (pissing) {
+      // Big happy grin
+      ctx.beginPath();
+      ctx.arc(0, -20, 7, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(0, -21);
+      ctx.quadraticCurveTo(-4, -18, -6, -19);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, -21);
+      ctx.quadraticCurveTo( 4, -18,  6, -19);
+      ctx.stroke();
+    }
 
     // ── Whiskers ──
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
@@ -314,11 +351,35 @@ export class Spawner {
     ctx.fillStyle   = color;
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth   = 1.5;
-    ctx.beginPath(); ctx.ellipse(-10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse( 10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    if (pissing) {
+      // Paws raised in joy
+      ctx.beginPath(); ctx.ellipse(-16, 12, 9, 5, -0.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse( 16, 12, 9, 5,  0.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.ellipse(-10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse( 10, 27, 9, 5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+
+    // ── Piss stream from the cat's rear during piss event ──
+    if (pissing) {
+      const sw = Math.sin(t * 8) * 2;
+      ctx.strokeStyle = 'rgba(255,220,0,0.75)';
+      ctx.lineWidth   = 3;
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      ctx.moveTo(sw, 28);
+      ctx.bezierCurveTo(sw + 4, 40, sw - 4, 52, sw + 2, 66);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,100,0.45)';
+      ctx.lineWidth   = 7;
+      ctx.beginPath();
+      ctx.moveTo(sw, 28);
+      ctx.bezierCurveTo(sw + 4, 40, sw - 4, 52, sw + 2, 66);
+      ctx.stroke();
+    }
 
     // ── Active: strain lines near butt ──
-    if (active) {
+    if (active && !pissing) {
       ctx.strokeStyle = 'rgba(139,115,85,0.65)';
       ctx.lineWidth   = 2;
       for (let i = 0; i < 3; i++) {

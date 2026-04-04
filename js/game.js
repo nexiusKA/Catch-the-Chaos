@@ -1,5 +1,5 @@
 import { ParticleSystem, ScreenShake, AudioManager, PopupText, rand } from './utils.js';
-import { FartSoundManager } from './soundManager.js';
+import { FartSoundManager, SoundPlayer } from './soundManager.js';
 import { Player } from './player.js';
 import { Spawner } from './spawner.js';
 import { InputHandler } from './input.js';
@@ -29,6 +29,11 @@ export class Game {
     this.fartSound = new FartSoundManager();
     this.ui        = new UI(this);
 
+    // Special-event sound players (loaded after first user gesture)
+    this.sndKuhpop   = new SoundPlayer('assets/sounds/platsch_kuhpop.mp3');
+    this.sndPiss     = new SoundPlayer('assets/sounds/piss.mp3');
+    this.sndPouring  = new SoundPlayer('assets/sounds/pouring_tea.mp3');
+
     // Touch-to-start / touch-to-restart support for mobile
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
@@ -36,6 +41,9 @@ export class Game {
       if (this.state === STATES.MENU || this.state === STATES.GAME_OVER) {
         if (this.state === STATES.MENU) {
           this.fartSound.init(this.audio.getCtx());
+          this.sndKuhpop.init(this.audio.getCtx());
+          this.sndPiss.init(this.audio.getCtx());
+          this.sndPouring.init(this.audio.getCtx());
         }
         this.startGame();
       }
@@ -63,6 +71,13 @@ export class Game {
     this.feverMode  = false;
     this.feverMeter = 0;
     this.feverMax   = 12;
+
+    // Piss event
+    this.pissEventActive    = false;
+    this.pissEventTimer     = 0;
+    this.pissEventDuration  = 18; // seconds
+    this.popsCaught         = 0;
+    this.pissEventThreshold = 10; // set randomly on startGame
 
     // Menu decoration spawner (for background eye-candy)
     this._menuSpawner  = new Spawner(this.width, this.height);
@@ -92,8 +107,14 @@ export class Game {
     this.shake          = new ScreenShake();
     this.popups         = [];
 
+    // Piss event reset
+    this.pissEventActive   = false;
+    this.pissEventTimer    = 0;
+    this.popsCaught        = 0;
+    this.pissEventThreshold = Math.floor(Math.random() * 21) + 10; // 10–30
+
     this.player  = new Player(this.width, this.height);
-    this.spawner = new Spawner(this.width, this.height, this.fartSound);
+    this.spawner = new Spawner(this.width, this.height, this.fartSound, this.sndPiss);
   }
 
   /** Kick off the animation loop (called once from main.js). */
@@ -123,6 +144,9 @@ export class Game {
       if (this.input.isDown('Space', 'Enter')) {
         this.audio._getCtx(); // unlock AudioContext on first interaction
         this.fartSound.init(this.audio.getCtx()); // preload fart sounds
+        this.sndKuhpop.init(this.audio.getCtx());
+        this.sndPiss.init(this.audio.getCtx());
+        this.sndPouring.init(this.audio.getCtx());
         this.startGame();
       }
       return;
@@ -158,6 +182,14 @@ export class Game {
       if (this.feverMeter === 0) {
         this.feverMode  = false;
         this.multiplier = this.player.hasPowerup('multiplier') ? 2 : 1;
+      }
+    }
+
+    // Piss event countdown
+    if (this.pissEventActive) {
+      this.pissEventTimer -= dt;
+      if (this.pissEventTimer <= 0) {
+        this._endPissEvent();
       }
     }
 
@@ -228,7 +260,7 @@ export class Game {
 
       // Particles & popup
       this.particles.burst(px, py, ['#FFD700', '#7FFF00', '#00FFCC', '#FF69B4'], 14);
-      this.audio.playCatch();
+      this.sndKuhpop.play(0.65, 0.9 + Math.random() * 0.2);
 
       const label = this.combo > 1 ? `×${this.combo}  +${pts}` : `+${pts}`;
       const col   = this.combo >= 10 ? '#FF6600' : this.combo >= 5 ? '#FFD700' : '#FFFFFF';
@@ -242,6 +274,26 @@ export class Game {
 
       this.player.squishCatch();
       this.player.triggerStink();
+
+      // Track pops and check for piss event trigger
+      if (!this.pissEventActive) {
+        this.popsCaught++;
+        if (this.popsCaught >= this.pissEventThreshold) {
+          this._triggerPissEvent();
+        }
+      }
+
+    } else if (drop.type === DROP_TYPES.PISS) {
+      // Catch during piss event — ×3 bonus points
+      const pts = drop.points * 3;
+      this.score += pts;
+      this.combo++;
+      if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+      this.particles.burst(px, py, ['#FFD700', '#FFE840', '#FFFF80', '#FFFFC0'], 16);
+      this.sndPouring.play(0.7, 0.95 + Math.random() * 0.1);
+      this.popups.push(new PopupText(`×3  +${pts}`, px, py - 20, '#FFE840', 24));
+      this.player.squishCatch();
 
     } else if (drop.type === DROP_TYPES.BAD) {
       if (this.player.hasPowerup('shield')) {
@@ -303,10 +355,38 @@ export class Game {
     }
   }
 
+  _triggerPissEvent() {
+    this.pissEventActive  = true;
+    this.pissEventTimer   = this.pissEventDuration;
+    this.spawner.pissMode = true;
+    this.spawner.drops    = []; // clear existing drops
+    this.player.pissModeActive = true;
+
+    this.shake.trigger(8, 0.45);
+    this.particles.burst(this.width / 2, this.height / 2,
+      ['#FFD700', '#FFE840', '#FFFF80', '#FFFFF0'], 28);
+    this.popups.push(
+      new PopupText('🍵 PISS EVENT! 🍵', this.width / 2, this.height / 2, '#FFE840', 36)
+    );
+  }
+
+  _endPissEvent() {
+    this.pissEventActive  = false;
+    this.spawner.pissMode = false;
+    this.spawner.drops    = []; // clear piss drops
+    this.player.pissModeActive = false;
+    // Set a new threshold for the next piss event
+    this.popsCaught        = 0;
+    this.pissEventThreshold = Math.floor(Math.random() * 21) + 10; // 10–30
+
+    this.popups.push(
+      new PopupText('Back to normal…', this.width / 2, this.height / 2 + 40, '#AAAAFF', 22)
+    );
+  }
+
   _activateFever() {
     this.feverMode  = true;
-    this.multiplier = this.player.hasPowerup('multiplier') ? 4 : 3;
-    this.audio.playFeverActivate();
+    this.multiplier = this.player.hasPowerup('multiplier') ? 4 : 3;    this.audio.playFeverActivate();
     this.shake.trigger(7, 0.4);
     this.popups.push(
       new PopupText('🔥 FEVER MODE! 🔥', this.width / 2, this.height / 2, '#FF6600', 38)
@@ -349,6 +429,7 @@ export class Game {
       this.ui.drawHUD(ctx);
 
       if (this.feverMode) this._drawFeverOverlay(ctx);
+      if (this.pissEventActive) this._drawPissOverlay(ctx);
       if (this.state === STATES.GAME_OVER) this.ui.drawGameOver(ctx, this._t);
     }
 
@@ -361,7 +442,10 @@ export class Game {
 
     // Gradient sky
     const sky = ctx.createLinearGradient(0, 0, 0, H);
-    if (this.feverMode) {
+    if (this.pissEventActive) {
+      sky.addColorStop(0, '#2a2800');
+      sky.addColorStop(1, '#1a1800');
+    } else if (this.feverMode) {
       sky.addColorStop(0, '#330022');
       sky.addColorStop(1, '#110033');
     } else {
@@ -458,6 +542,38 @@ export class Game {
     ctx.lineWidth   = 6;
     ctx.globalAlpha = 0.45 + Math.sin(t * 10) * 0.3;
     ctx.strokeRect(3, 3, this.width - 6, this.height - 6);
+    ctx.restore();
+  }
+
+  _drawPissOverlay(ctx) {
+    const t   = this._t;
+    const pct = Math.max(0, this.pissEventTimer / this.pissEventDuration);
+
+    ctx.save();
+    ctx.globalAlpha = 0.06 + Math.sin(t * 8) * 0.03;
+    ctx.fillStyle   = '#FFE840';
+    ctx.fillRect(0, 0, this.width, this.height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth   = 6;
+    ctx.globalAlpha = 0.4 + Math.sin(t * 9) * 0.25;
+    ctx.strokeRect(3, 3, this.width - 6, this.height - 6);
+    ctx.restore();
+
+    // Timer bar and label at the top
+    const barW = (this.width - 20) * pct;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(10, 76, this.width - 20, 6);
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(10, 76, barW, 6);
+    ctx.fillStyle = '#FFE840';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('🍵 PISS EVENT  ×3 PTS', this.width / 2, 73);
     ctx.restore();
   }
 }
