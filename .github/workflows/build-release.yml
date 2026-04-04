@@ -23,6 +23,8 @@ jobs:
           mkdir -p dist
           cp index.html style.css dist/
           cp -r js assets dist/
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i "s/__VERSION__/v$VERSION/g" dist/js/ui.js
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
