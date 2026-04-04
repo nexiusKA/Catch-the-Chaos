@@ -1,19 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catch the Chaos! 💨</title>
-  <link rel="stylesheet" href="src/style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catch the Chaos!</title>
+  <style>
+    :root {
+      --bg: #0a0f14;
+      --panel: #101922;
+      --border: #243445;
+      --text: #e8f2fa;
+      --muted: #9fb5c7;
+      --accent: #88e5b9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% -15%, #1e3448 0%, transparent 42%),
+        radial-gradient(circle at 92% -10%, #2e1f2f 0%, transparent 36%),
+        var(--bg);
+    }
+    .panel {
+      width: min(760px, calc(100vw - 28px));
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.7rem; }
+    p  { margin: 0 0 14px; color: var(--muted); }
+    .links { display: grid; gap: 10px; }
+    a {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: rgba(12, 18, 25, 0.95);
+    }
+    a:hover { border-color: var(--accent); color: var(--accent); }
+    .meta { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+  </style>
 </head>
 <body>
-  <div id="game-wrapper">
-    <canvas id="gameCanvas"></canvas>
-  </div>
-  <div id="mobile-controls">
-    <button id="btn-left" aria-label="Move Left">◀</button>
-    <button id="btn-right" aria-label="Move Right">▶</button>
-  </div>
-  <script type="module" src="src/main.js"></script>
+  <main class="panel">
+    <h1>Catch the Chaos! 💨</h1>
+    <p>Select a destination.</p>
+    <div class="links">
+      <a href="./game.html">Play Game</a>
+      <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
+    </div>
+  </main>
 </body>
 </html>
