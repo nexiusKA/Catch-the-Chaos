@@ -12,6 +12,7 @@ const rootDir = path.resolve(__dirname, "..");
 
 const distDir = path.join(rootDir, "dist");
 const templateHtmlPath = path.join(rootDir, "src", "index.template.html");
+const landingTemplatePath = path.join(rootDir, "index.html");
 const perkLibraryTemplateHtmlPath = path.join(rootDir, "src", "perk-library.template.html");
 const showcaseTemplateHtmlPath = path.join(rootDir, "src", "showcase.template.html");
 const skillsShowcaseTemplateHtmlPath = path.join(rootDir, "src", "skills-showcase.template.html");
@@ -300,8 +301,9 @@ async function runBuild() {
   const gitInfo = getGitInfo();
   const buildDate = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
   const buildInfo = { ...gitInfo, buildDate };
-  const [templateHtml, perkLibraryTemplateHtml, showcaseTemplateHtml, skillsShowcaseTemplateHtml, cssContent, staticPagesCssContent] = await Promise.all([
+  const [templateHtml, landingTemplateHtml, perkLibraryTemplateHtml, showcaseTemplateHtml, skillsShowcaseTemplateHtml, cssContent, staticPagesCssContent] = await Promise.all([
     readFile(templateHtmlPath, "utf8"),
+    readFile(landingTemplatePath, "utf8"),
     readFile(perkLibraryTemplateHtmlPath, "utf8"),
     readFile(showcaseTemplateHtmlPath, "utf8"),
     readFile(skillsShowcaseTemplateHtmlPath, "utf8"),
@@ -458,7 +460,7 @@ async function runBuild() {
     keepClosingSlash: true,
   });
 
-  const landingSourceHtml = buildLandingHtml(appVersion, buildInfo);
+  const landingSourceHtml = landingTemplateHtml.replace(/__APP_VERSION__/g, appVersion);
   const landingHtml = await minify(landingSourceHtml, {
     collapseWhitespace: true,
     removeComments: true,
