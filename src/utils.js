@@ -182,6 +182,10 @@ export class AudioManager {
     this._tone(440, 'sine', 0.14, 0.28, 880);
   }
 
+  playPissCatch() {
+    this._tone(700, 'sine', 0.1, 0.1, 350);
+  }
+
   playMiss() {
     this._tone(260, 'sawtooth', 0.3, 0.22, 80);
   }

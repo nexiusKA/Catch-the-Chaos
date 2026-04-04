@@ -32,7 +32,6 @@ export class Game {
     // Special-event sound players (loaded after first user gesture)
     this.sndKuhpop   = new SoundPlayer('assets/sounds/platsch_kuhpop.mp3');
     this.sndPiss     = new SoundPlayer('assets/sounds/piss.mp3');
-    this.sndPouring  = new SoundPlayer('assets/sounds/pouring_tea.mp3');
 
     // Touch-to-start / touch-to-restart support for mobile
     canvas.addEventListener('touchstart', (e) => {
@@ -43,7 +42,6 @@ export class Game {
           this.fartSound.init(this.audio.getCtx());
           this.sndKuhpop.init(this.audio.getCtx());
           this.sndPiss.init(this.audio.getCtx());
-          this.sndPouring.init(this.audio.getCtx());
         }
         this.startGame();
       }
@@ -146,7 +144,6 @@ export class Game {
         this.fartSound.init(this.audio.getCtx()); // preload fart sounds
         this.sndKuhpop.init(this.audio.getCtx());
         this.sndPiss.init(this.audio.getCtx());
-        this.sndPouring.init(this.audio.getCtx());
         this.startGame();
       }
       return;
@@ -291,7 +288,7 @@ export class Game {
       if (this.combo > this.maxCombo) this.maxCombo = this.combo;
 
       this.particles.burst(px, py, ['#FFD700', '#FFE840', '#FFFF80', '#FFFFC0'], 16);
-      this.sndPouring.play(0.7, 0.95 + Math.random() * 0.1);
+      this.audio.playPissCatch();
       this.popups.push(new PopupText(`×3  +${pts}`, px, py - 20, '#FFE840', 24));
       this.player.squishCatch();
 
