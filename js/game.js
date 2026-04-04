@@ -29,6 +29,18 @@ export class Game {
     this.fartSound = new FartSoundManager();
     this.ui        = new UI(this);
 
+    // Touch-to-start / touch-to-restart support for mobile
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.audio._getCtx();
+      if (this.state === STATES.MENU || this.state === STATES.GAME_OVER) {
+        if (this.state === STATES.MENU) {
+          this.fartSound.init(this.audio.getCtx());
+        }
+        this.startGame();
+      }
+    }, { passive: false });
+
     // Session-specific subsystems (re-created on restart)
     this.player   = null;
     this.spawner  = null;
@@ -229,6 +241,7 @@ export class Game {
       }
 
       this.player.squishCatch();
+      this.player.triggerStink();
 
     } else if (drop.type === DROP_TYPES.BAD) {
       if (this.player.hasPowerup('shield')) {
