@@ -16,7 +16,7 @@ export const SPECIAL_EFFECTS = Object.freeze({
   SHIELD: 'shield',
 });
 
-const GOOD_COLORS = ['#7FFF00', '#00FFCC', '#FFD700', '#FF69B4', '#00BFFF'];
+const GOOD_COLORS = ['#8B4513', '#A0522D', '#6B3A2A', '#7B4B2A', '#9B6133'];
 const BAD_COLORS  = ['#FF2222', '#FF5500', '#CC00FF'];
 const SPEC_COLORS = ['#FFD700', '#7B68EE', '#FF1493', '#ADFF2F', '#00CED1'];
 
@@ -65,8 +65,8 @@ export class Drop {
     if (this.type === DROP_TYPES.GOOD) {
       this.color     = GOOD_COLORS[randInt(0, GOOD_COLORS.length - 1)];
       this.size      = rand(14, 22);
-      this.shape     = randInt(0, 2); // 0=blob 1=capsule 2=star
-      this.glowColor = this.color;
+      this.shape     = 0; // poop blob
+      this.glowColor = '#88CC44'; // stink-green glow
       this.points    = GOOD_POINTS[randInt(0, GOOD_POINTS.length - 1)];
 
     } else if (this.type === DROP_TYPES.BAD) {
@@ -135,7 +135,13 @@ export class Drop {
 
     // Shape
     switch (this.shape) {
-      case 0: this._drawBlob(ctx);    break;
+      case 0:
+        ctx.save();
+        ctx.rotate(-this.rotation); // keep poop upright despite wobble rotation
+        ctx.scale(1, 1 + Math.sin(this.age * 9) * 0.05); // subtle bounce squish
+        this._drawPoop(ctx);
+        ctx.restore();
+        break;
       case 1: this._drawCapsule(ctx); break;
       case 2: this._drawStar(ctx, 5); break;
       case 3: this._drawSpiky(ctx);   break;
@@ -147,27 +153,72 @@ export class Drop {
 
   // ── shape renderers ─────────────────────────────────────────────────────────
 
-  _drawBlob(ctx) {
-    const r = this.size;
-    ctx.fillStyle   = this.color;
-    ctx.strokeStyle = '#000';
+  _drawPoop(ctx) {
+    const r            = this.size;
+    const c            = this.color;
+    const outlineColor = '#2a0e00';
+
+    ctx.strokeStyle = outlineColor;
     ctx.lineWidth   = 2;
+
+    // Base mound
+    ctx.fillStyle = c;
     ctx.beginPath();
-    ctx.moveTo(r * 0.8, 0);
-    ctx.bezierCurveTo(r, -r * 0.9, -r * 0.5, -r,   -r * 0.8, 0);
-    ctx.bezierCurveTo(-r, r * 0.7,  r * 0.3,  r * 1.1, r * 0.8, 0);
+    ctx.arc(0, r * 0.28, r * 0.82, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Middle tier (slightly offset for character)
+    ctx.beginPath();
+    ctx.arc(r * 0.08, -r * 0.15, r * 0.58, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Upper tier
+    ctx.beginPath();
+    ctx.arc(-r * 0.04, -r * 0.56, r * 0.36, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Swirly tip
+    ctx.beginPath();
+    ctx.arc(r * 0.06, -r * 0.88, r * 0.21, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Highlight shine
+    ctx.fillStyle = 'rgba(255,210,170,0.32)';
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.22, r * 0.08, r * 0.13, r * 0.27, -0.4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
+
     // Eyes
-    ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.arc(-r * 0.25, -r * 0.15, 2.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc( r * 0.15, -r * 0.15, 2.5, 0, Math.PI * 2); ctx.fill();
+    const eyeY = r * 0.12;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(-r * 0.28, eyeY, r * 0.16, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( r * 0.22, eyeY, r * 0.16, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a0800';
+    ctx.beginPath(); ctx.arc(-r * 0.23, eyeY + r * 0.04, r * 0.09, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc( r * 0.27, eyeY + r * 0.04, r * 0.09, 0, Math.PI * 2); ctx.fill();
+
     // Smile
-    ctx.strokeStyle = '#000';
+    ctx.strokeStyle = '#1a0800';
     ctx.lineWidth   = 1.5;
     ctx.beginPath();
-    ctx.arc(0, r * 0.05, r * 0.25, 0.1, Math.PI - 0.1);
+    ctx.arc(0, r * 0.33, r * 0.22, 0.15, Math.PI - 0.15);
     ctx.stroke();
+
+    // Animated stink lines above the poop
+    ctx.strokeStyle = 'rgba(130,210,50,0.72)';
+    ctx.lineWidth   = 1.5;
+    const sw = Math.sin(this.age * 5) * 3;
+    [[-r * 0.45, r * 0.72], [0, r * 0.88], [r * 0.45, r * 0.72]].forEach(([sx]) => {
+      const baseY = -r * 1.1;
+      ctx.beginPath();
+      ctx.moveTo(sx + sw,      baseY);
+      ctx.bezierCurveTo(
+        sx + sw + 5, baseY - r * 0.22,
+        sx + sw - 5, baseY - r * 0.44,
+        sx + sw,     baseY - r * 0.62
+      );
+      ctx.stroke();
+    });
   }
 
   _drawCapsule(ctx) {

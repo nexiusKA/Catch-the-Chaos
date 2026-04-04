@@ -149,6 +149,11 @@ export class AudioManager {
     return this._ctx;
   }
 
+  /** Public accessor – returns the AudioContext, creating it if necessary. */
+  getCtx() {
+    return this._getCtx();
+  }
+
   _tone(freq, type, duration, gain = 0.28, freqEnd = null) {
     if (!this.enabled) return;
     const ctx = this._getCtx();

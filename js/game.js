@@ -1,4 +1,5 @@
 import { ParticleSystem, ScreenShake, AudioManager, PopupText, rand } from './utils.js';
+import { FartSoundManager } from './soundManager.js';
 import { Player } from './player.js';
 import { Spawner } from './spawner.js';
 import { InputHandler } from './input.js';
@@ -23,9 +24,10 @@ export class Game {
     this.height = canvas.height;
 
     // Persistent subsystems
-    this.input   = new InputHandler();
-    this.audio   = new AudioManager();
-    this.ui      = new UI(this);
+    this.input     = new InputHandler();
+    this.audio     = new AudioManager();
+    this.fartSound = new FartSoundManager();
+    this.ui        = new UI(this);
 
     // Session-specific subsystems (re-created on restart)
     this.player   = null;
@@ -79,7 +81,7 @@ export class Game {
     this.popups         = [];
 
     this.player  = new Player(this.width, this.height);
-    this.spawner = new Spawner(this.width, this.height);
+    this.spawner = new Spawner(this.width, this.height, this.fartSound);
   }
 
   /** Kick off the animation loop (called once from main.js). */
@@ -108,6 +110,7 @@ export class Game {
 
       if (this.input.isDown('Space', 'Enter')) {
         this.audio._getCtx(); // unlock AudioContext on first interaction
+        this.fartSound.init(this.audio.getCtx()); // preload fart sounds
         this.startGame();
       }
       return;
@@ -373,11 +376,60 @@ export class Game {
     ctx.fillStyle = '#3a3a6a';
     ctx.fillRect(0, 64, W, 4);
 
+    // Cartoon toilet + person silhouettes (one per machine slot)
+    this._drawToiletRow(ctx, W);
+
     // Ground
     ctx.fillStyle = '#1a5a1a';
     ctx.fillRect(0, H - 32, W, 32);
     ctx.fillStyle = '#2a8a2a';
     ctx.fillRect(0, H - 32, W, 5);
+  }
+
+  /** Draw a row of 5 simplified cartoon toilet silhouettes at the top shelf. */
+  _drawToiletRow(ctx, W) {
+    const count = 5;
+    for (let i = 0; i < count; i++) {
+      const mx = Math.round((W / count) * (i + 0.5));
+      ctx.save();
+      ctx.translate(mx, 66); // bottom of shelf
+      ctx.fillStyle = '#10102a';
+
+      // Toilet tank (tall rectangle at back)
+      ctx.fillRect(-9, -46, 18, 26);
+
+      // Toilet bowl (oval)
+      ctx.beginPath();
+      ctx.ellipse(0, -22, 16, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pedestal
+      ctx.fillRect(-7, -14, 14, 10);
+
+      // Person body (rounded blob sitting on bowl)
+      ctx.beginPath();
+      ctx.arc(1, -36, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Person head
+      ctx.beginPath();
+      ctx.arc(1, -51, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dangling legs
+      ctx.fillRect(-13, -25, 6, 12);
+      ctx.fillRect(7,   -25, 6, 12);
+
+      // Tiny feet
+      ctx.beginPath();
+      ctx.ellipse(-10, -13, 5, 3, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(10, -13, 5, 3, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
   }
 
   _drawFeverOverlay(ctx) {
