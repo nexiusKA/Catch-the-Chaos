@@ -170,10 +170,18 @@
     <a href="https://github.com/nexiusKA/Catch-the-Chaos" class="btn-secondary" target="_blank" rel="noopener noreferrer">GitHub Repository ↗</a>
 
     <p class="controls">← / → or A / D to move &nbsp;|&nbsp; ◀ ▶ on mobile</p>
-    <p class="version">v__APP_VERSION__</p>
+    <p class="version" id="app-version"></p>
   </main>
 
   <script>
+    // Set version text only when placeholder has been replaced by the build
+    (function() {
+      var v = "v__APP_VERSION__";
+      if (v.indexOf("__") === -1) {
+        document.getElementById("app-version").textContent = v;
+      }
+    })();
+
     // Generate random stars
     const container = document.getElementById('stars');
     for (let i = 0; i < 80; i++) {
