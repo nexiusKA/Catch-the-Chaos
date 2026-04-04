@@ -55,77 +55,114 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Catch the Chaos!</title>
     <style>
-      :root {
-        --bg: #0a0f14;
-        --panel: #101922;
-        --border: #243445;
-        --text: #e8f2fa;
-        --muted: #9fb5c7;
-        --accent: #88e5b9;
-      }
-      * { box-sizing: border-box; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        margin: 0;
         min-height: 100vh;
         display: grid;
         place-items: center;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        color: var(--text);
-        background:
-          radial-gradient(circle at 8% -15%, #1e3448 0%, transparent 42%),
-          radial-gradient(circle at 92% -10%, #2e1f2f 0%, transparent 36%),
-          var(--bg);
+        background: #0a0a1a;
+        font-family: 'Arial Black', Arial, sans-serif;
+        color: #fff;
+        overflow: hidden;
       }
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .stars span {
+        position: absolute;
+        border-radius: 50%;
+        background: #fff;
+        animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+        opacity: 0.4;
+      }
+      @keyframes twinkle { to { opacity: 0.05; } }
       .panel {
-        width: min(760px, calc(100vw - 28px));
-        background: var(--panel);
-        border: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+        width: min(480px, calc(100vw - 28px));
+        background: rgba(10, 10, 30, 0.92);
+        border: 3px solid #ff6600;
         border-radius: 14px;
-        padding: 22px;
+        padding: 36px 32px 30px;
+        text-align: center;
+        box-shadow: 0 0 40px rgba(255,102,0,.45), 0 0 90px rgba(255,102,0,.18);
       }
       h1 {
-        margin: 0 0 8px;
-        font-size: 1.7rem;
+        font-size: clamp(2rem, 8vw, 2.8rem);
+        line-height: 1.15;
+        margin-bottom: 6px;
+        background: linear-gradient(180deg, #FFD700 0%, #FF6600 50%, #FF0066 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: drop-shadow(0 0 10px rgba(255,102,0,.7));
       }
-      p {
-        margin: 0 0 14px;
-        color: var(--muted);
+      .tagline {
+        color: #aaffaa;
+        font-family: Arial, sans-serif;
+        font-size: 0.95rem;
+        margin-bottom: 28px;
       }
-      .links {
-        display: grid;
-        gap: 10px;
-      }
-      a {
+      .links { display: grid; gap: 12px; }
+      .btn-play {
         display: block;
         text-decoration: none;
-        color: var(--text);
-        border: 1px solid var(--border);
+        color: #fff;
+        font-family: 'Arial Black', Arial, sans-serif;
+        font-size: 1.15rem;
+        letter-spacing: 0.05em;
+        background: rgba(255,102,0,.2);
+        border: 3px solid #ff6600;
         border-radius: 10px;
-        padding: 12px 14px;
-        background: rgba(12, 18, 25, 0.95);
+        padding: 14px 20px;
+        transition: background .15s, transform .1s;
+        box-shadow: 0 0 18px rgba(255,102,0,.35);
+        animation: pulse-btn 2.2s ease-in-out infinite;
       }
-      a:hover {
-        border-color: var(--accent);
-        color: var(--accent);
+      .btn-play:hover {
+        background: rgba(255,102,0,.42);
+        transform: scale(1.03);
       }
-      .meta {
+      @keyframes pulse-btn {
+        0%, 100% { box-shadow: 0 0 18px rgba(255,102,0,.35); }
+        50%       { box-shadow: 0 0 32px rgba(255,102,0,.7); }
+      }
+      .btn-secondary {
+        display: block;
+        text-decoration: none;
+        color: #aaa;
+        font-family: Arial, sans-serif;
+        font-size: 0.88rem;
+        border: 1px solid rgba(255,102,0,.3);
+        border-radius: 8px;
+        padding: 10px 14px;
+        transition: border-color .15s, color .15s;
+      }
+      .btn-secondary:hover { border-color: #ff6600; color: #ff9944; }
+      .version {
         margin-top: 14px;
-        font-size: 0.85rem;
-        color: var(--muted);
+        font-family: Arial, sans-serif;
+        font-size: 0.72rem;
+        color: rgba(255,255,255,.3);
       }
       .git-info {
         margin-top: 14px;
-        border: 1px solid var(--border);
-        border-radius: 10px;
+        border: 1px solid rgba(255,102,0,.25);
+        border-radius: 8px;
         padding: 12px 14px;
-        font-size: 0.82rem;
-        color: var(--muted);
+        text-align: left;
+        font-family: Arial, sans-serif;
+        font-size: 0.78rem;
+        color: #aaa;
       }
       .git-info > summary {
         cursor: pointer;
-        color: var(--accent);
-        font-size: 0.85rem;
-        letter-spacing: 0.03em;
+        color: rgba(255,200,100,.7);
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
         user-select: none;
         list-style: none;
       }
@@ -136,30 +173,28 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
         margin-top: 10px;
         display: grid;
         grid-template-columns: auto 1fr;
-        gap: 4px 12px;
+        gap: 4px 10px;
         word-break: break-all;
       }
-      .git-info-grid dt {
-        color: var(--accent);
-        white-space: nowrap;
-      }
+      .git-info-grid dt { color: rgba(255,200,100,.6); white-space: nowrap; }
       .git-info-grid dd { margin: 0; }
-      .git-info-grid a { color: var(--accent); }
+      .git-info-grid a { color: #ff9944; text-decoration: none; }
       .git-info-grid a:hover { text-decoration: underline; }
     </style>
   </head>
   <body>
+    <div class="stars" id="stars"></div>
     <main class="panel">
-      <h1>Catch the Chaos! 💨</h1>
-      <p>Select a destination.</p>
+      <h1>CATCH THE<br>CHAOS! 💨</h1>
+      <p class="tagline">Catch the blobs · Dodge the spikes!</p>
       <div class="links">
-        <a href="./game.html">Play Game</a>
-        <a href="./perk-library.html">Perk Library</a>
-        <a href="./showcase.html">Enemy Showcase</a>
-        <a href="./skills-showcase.html">Skill Showcase</a>
-        <a href="https://github.com/nexiusKA/Catch-the-Chaos">GitHub Repository</a>
+        <a href="./game.html" class="btn-play">▶ &nbsp;PLAY NOW</a>
+        <a href="./perk-library.html" class="btn-secondary">Perk Library</a>
+        <a href="./showcase.html" class="btn-secondary">Enemy Showcase</a>
+        <a href="./skills-showcase.html" class="btn-secondary">Skill Showcase</a>
+        <a href="https://github.com/nexiusKA/Catch-the-Chaos" class="btn-secondary" target="_blank" rel="noopener noreferrer">GitHub Repository ↗</a>
       </div>
-      <div class="meta">Build version ${escapeHtml(appVersion)}</div>
+      <div class="version">Build version ${escapeHtml(appVersion)}</div>
       <details class="git-info">
         <summary>Git Info</summary>
         <dl class="git-info-grid">
@@ -170,6 +205,15 @@ function buildLandingHtml(appVersion, gitInfo = {}) {
         </dl>
       </details>
     </main>
+    <script>
+      const c = document.getElementById('stars');
+      for (let i = 0; i < 80; i++) {
+        const s = document.createElement('span');
+        const sz = Math.random() * 2.5 + 0.5;
+        s.style.cssText = \`width:\${sz}px;height:\${sz}px;top:\${Math.random()*100}%;left:\${Math.random()*100}%;--d:\${(Math.random()*3+1.5).toFixed(1)}s;animation-delay:\${(Math.random()*3).toFixed(1)}s\`;
+        c.appendChild(s);
+      }
+    </script>
   </body>
 </html>`;
 }
