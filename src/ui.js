@@ -2,7 +2,9 @@ import { roundRect } from './utils.js';
 
 export class UI {
   constructor(game) {
-    this.game = game;
+    this.game            = game;
+    this.soundBtnBounds  = null;
+    this.sliderBounds    = null;
   }
 
   // ─── HUD (in-game overlay) ──────────────────────────────────────────────────
@@ -142,6 +144,9 @@ export class UI {
     ctx.fillText('SPACE / ENTER / Tap to play!', W / 2, H * 0.65);
     ctx.globalAlpha = 1;
 
+    // Sound controls (mute button + volume slider)
+    this._drawSoundControls(ctx, W, H);
+
     // High score
     if (g.highScore > 0) {
       ctx.fillStyle = '#FFD700';
@@ -163,6 +168,83 @@ export class UI {
     ctx.fillText(appVersion, W - 8, H - 8);
 
     ctx.restore();
+  }
+
+  _drawSoundControls(ctx, W, H) {
+    const audio   = this.game.audio;
+    const muted   = audio.muted;
+    const volume  = audio.volume;
+
+    // Layout: mute button + volume slider, centred horizontally
+    const cy      = H * 0.555;          // vertical centre of the row
+    const btnW    = 30;  const btnH = 26;
+    const slW     = 148; const slH  = 10;
+    const gap     = 10;
+    const totalW  = btnW + gap + slW;
+    const startX  = W / 2 - totalW / 2;
+
+    // ── Mute button ──────────────────────────────────────────────────────
+    const bx = startX;
+    const by = cy - btnH / 2;
+    // Store bounds for hit-testing
+    this.soundBtnBounds = { x: bx, y: by, w: btnW, h: btnH };
+
+    ctx.fillStyle   = muted ? 'rgba(180,30,30,0.85)' : 'rgba(30,140,60,0.85)';
+    ctx.strokeStyle = muted ? '#FF6666' : '#66FF99';
+    ctx.lineWidth   = 1.5;
+    roundRect(ctx, bx, by, btnW, btnH, 6);
+    ctx.fill(); ctx.stroke();
+
+    ctx.font         = '16px Arial';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = '#FFFFFF';
+    ctx.fillText(muted ? '🔇' : '🔊', bx + btnW / 2, cy);
+
+    // ── Volume slider ────────────────────────────────────────────────────
+    const sx = startX + btnW + gap;
+    const sy = cy - slH / 2;
+    // Store bounds for hit-testing
+    this.sliderBounds = { x: sx, y: sy, w: slW, h: slH };
+
+    // Track (background)
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    roundRect(ctx, sx, sy, slW, slH, 5);
+    ctx.fill();
+
+    // Track fill
+    const fillW = volume * slW;
+    if (fillW > 2) {
+      const grd = ctx.createLinearGradient(sx, 0, sx + slW, 0);
+      grd.addColorStop(0, '#44AAFF');
+      grd.addColorStop(1, '#AA44FF');
+      ctx.fillStyle = muted ? '#555' : grd;
+      roundRect(ctx, sx, sy, fillW, slH, 5);
+      ctx.fill();
+    }
+
+    // Track border
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth   = 1;
+    roundRect(ctx, sx, sy, slW, slH, 5);
+    ctx.stroke();
+
+    // Thumb
+    const tx = sx + volume * slW;
+    ctx.fillStyle = muted ? '#777' : '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(tx, cy, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = muted ? '#999' : '#AADDFF';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+
+    // Volume percentage label
+    ctx.font         = 'bold 11px Arial';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle    = 'rgba(200,200,200,0.8)';
+    ctx.fillText(`${Math.round(volume * 100)}%`, sx + slW + 18, cy + 4);
   }
 
   _drawLegend(ctx, cx, cy) {

@@ -2,15 +2,20 @@
 
 export class SoundPlayer {
   constructor(url) {
-    this._url    = url;
-    this._ctx    = null;
-    this._buffer = null;
-    this._loaded = false;
+    this._url      = url;
+    this._audioMgr = null;
+    this._buffer   = null;
+    this._loaded   = false;
   }
 
-  init(ctx) {
-    if (this._loaded || !ctx) return;
-    this._ctx = ctx;
+  /**
+   * @param {import('./utils.js').AudioManager} audioMgr
+   */
+  init(audioMgr) {
+    if (this._loaded || !audioMgr) return;
+    this._audioMgr = audioMgr;
+    const ctx = audioMgr.getCtx();
+    if (!ctx) return;
     fetch(this._url)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); })
       .then(buf => ctx.decodeAudioData(buf))
@@ -19,15 +24,17 @@ export class SoundPlayer {
   }
 
   play(volume = 0.7, playbackRate = 1.0) {
-    if (!this._loaded || !this._ctx) return;
-    if (this._ctx.state === 'suspended') this._ctx.resume();
-    const source = this._ctx.createBufferSource();
+    if (!this._loaded || !this._audioMgr) return;
+    const ctx = this._audioMgr.getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    const source = ctx.createBufferSource();
     source.buffer = this._buffer;
     source.playbackRate.value = playbackRate;
-    const gain = this._ctx.createGain();
+    const gain = ctx.createGain();
     gain.gain.value = volume;
     source.connect(gain);
-    gain.connect(this._ctx.destination);
+    gain.connect(this._audioMgr.getMasterDest() || ctx.destination);
     source.start();
   }
 }
@@ -46,19 +53,21 @@ const FART_SOUND_FILES = [
 
 export class FartSoundManager {
   constructor() {
-    this._ctx     = null;
-    this._buffers = [];
-    this._loaded  = false;
+    this._audioMgr = null;
+    this._buffers  = [];
+    this._loaded   = false;
   }
 
   /**
    * Preload all fart sound files. Must be called after an AudioContext exists
    * (i.e. after a user gesture has unlocked the browser's audio policy).
-   * @param {AudioContext} ctx
+   * @param {import('./utils.js').AudioManager} audioMgr
    */
-  init(ctx) {
-    if (this._loaded || this._buffers.length > 0 || !ctx) return;
-    this._ctx = ctx;
+  init(audioMgr) {
+    if (this._loaded || this._buffers.length > 0 || !audioMgr) return;
+    this._audioMgr = audioMgr;
+    const ctx = audioMgr.getCtx();
+    if (!ctx) return;
 
     const promises = FART_SOUND_FILES.map(url =>
       fetch(url)
@@ -81,22 +90,24 @@ export class FartSoundManager {
    * Overlapping calls are fully supported – each call creates an independent source.
    */
   playRandom() {
-    if (!this._loaded || this._buffers.length === 0 || !this._ctx) return;
-    if (this._ctx.state === 'suspended') this._ctx.resume();
+    if (!this._loaded || this._buffers.length === 0 || !this._audioMgr) return;
+    const ctx = this._audioMgr.getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
 
     const buf    = this._buffers[Math.floor(Math.random() * this._buffers.length)];
-    const source = this._ctx.createBufferSource();
+    const source = ctx.createBufferSource();
     source.buffer = buf;
 
     // Slight random pitch variation to keep repeated sounds from feeling stale
     source.playbackRate.value = 0.88 + Math.random() * 0.26; // 0.88 – 1.14×
 
     // Volume: balanced so overlapping sounds don't clip harshly
-    const gain       = this._ctx.createGain();
+    const gain       = ctx.createGain();
     gain.gain.value  = 0.45 + Math.random() * 0.2; // 0.45 – 0.65
 
     source.connect(gain);
-    gain.connect(this._ctx.destination);
+    gain.connect(this._audioMgr.getMasterDest() || ctx.destination);
     source.start();
   }
 }
