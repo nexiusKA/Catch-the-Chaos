@@ -131,14 +131,22 @@ export class ScreenShake {
 
 export class AudioManager {
   constructor() {
-    this.enabled = true;
-    this._ctx = null;
+    this.enabled     = true;
+    this._ctx        = null;
+    this._masterGain = null;
+    // Load persisted settings (default: unmuted, full volume)
+    this.volume = parseFloat(localStorage.getItem('catchChaosVol') ?? '1');
+    this.muted  = localStorage.getItem('catchChaosMuted') === 'true';
   }
 
   _getCtx() {
     if (!this._ctx) {
       try {
         this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Wire a master gain node so volume/mute can be controlled globally
+        this._masterGain = this._ctx.createGain();
+        this._masterGain.connect(this._ctx.destination);
+        this._applyVolume();
       } catch (_) {
         this.enabled = false;
       }
@@ -154,6 +162,34 @@ export class AudioManager {
     return this._getCtx();
   }
 
+  /** Returns the master GainNode that all sounds should connect to. */
+  getMasterDest() {
+    this._getCtx();
+    return this._masterGain;
+  }
+
+  _applyVolume() {
+    if (this._masterGain) {
+      this._masterGain.gain.value = this.muted ? 0 : this.volume;
+    }
+  }
+
+  /** Set volume (0–1) and persist to localStorage. */
+  setVolume(v) {
+    this.volume = Math.max(0, Math.min(1, v));
+    if (this.volume > 0) this.muted = false;
+    this._applyVolume();
+    localStorage.setItem('catchChaosVol',    String(this.volume));
+    localStorage.setItem('catchChaosMuted',  String(this.muted));
+  }
+
+  /** Toggle mute and persist to localStorage. */
+  toggleMute() {
+    this.muted = !this.muted;
+    this._applyVolume();
+    localStorage.setItem('catchChaosMuted', String(this.muted));
+  }
+
   _tone(freq, type, duration, gain = 0.28, freqEnd = null) {
     if (!this.enabled) return;
     const ctx = this._getCtx();
@@ -162,7 +198,7 @@ export class AudioManager {
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
     osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    gainNode.connect(this._masterGain || ctx.destination);
 
     osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);

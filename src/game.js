@@ -37,15 +37,45 @@ export class Game {
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       this.audio._getCtx();
-      if (this.state === STATES.MENU || this.state === STATES.GAME_OVER) {
-        if (this.state === STATES.MENU) {
-          this.fartSound.init(this.audio.getCtx());
-          this.sndKuhpop.init(this.audio.getCtx());
-          this.sndPiss.init(this.audio.getCtx());
-        }
+      const touch = e.touches[0];
+      const pos   = this._canvasPos(touch.clientX, touch.clientY);
+      if (this.state === STATES.MENU) {
+        if (this._hitSoundBtn(pos)) { this.audio.toggleMute(); return; }
+        if (this._hitSlider(pos))   { this._sliderDrag = true; this._setVolumeFromX(pos.x); return; }
+        this.fartSound.init(this.audio);
+        this.sndKuhpop.init(this.audio);
+        this.sndPiss.init(this.audio);
+        this.startGame();
+      } else if (this.state === STATES.GAME_OVER) {
         this.startGame();
       }
     }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (this._sliderDrag) {
+        e.preventDefault();
+        const pos = this._canvasPos(e.touches[0].clientX, e.touches[0].clientY);
+        this._setVolumeFromX(pos.x);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => { this._sliderDrag = false; });
+
+    // Mouse interactions for sound controls on the menu
+    this._sliderDrag = false;
+    canvas.addEventListener('mousedown', (e) => {
+      if (this.state !== STATES.MENU) return;
+      const pos = this._canvasPos(e.clientX, e.clientY);
+      if (this._hitSoundBtn(pos)) { this.audio._getCtx(); this.audio.toggleMute(); return; }
+      if (this._hitSlider(pos))   { this._sliderDrag = true; this._setVolumeFromX(pos.x); }
+    });
+    canvas.addEventListener('mousemove', (e) => {
+      if (this._sliderDrag && this.state === STATES.MENU) {
+        this._setVolumeFromX(this._canvasPos(e.clientX, e.clientY).x);
+      }
+    });
+    canvas.addEventListener('mouseup',    () => { this._sliderDrag = false; });
+    canvas.addEventListener('mouseleave', () => { this._sliderDrag = false; });
 
     // Session-specific subsystems (re-created on restart)
     this.player   = null;
@@ -151,6 +181,35 @@ export class Game {
     this._raf = requestAnimationFrame(tick);
   }
 
+  // ─── Sound-controls helpers ───────────────────────────────────────────────────
+
+  /** Convert client (screen) coordinates to logical canvas coordinates. */
+  _canvasPos(clientX, clientY) {
+    const rect   = this.canvas.getBoundingClientRect();
+    const scaleX = this.width  / this.canvas.clientWidth;
+    const scaleY = this.height / this.canvas.clientHeight;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  _hitSoundBtn(pos) {
+    const b = this.ui.soundBtnBounds;
+    if (!b) return false;
+    return pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h;
+  }
+
+  _hitSlider(pos) {
+    const s = this.ui.sliderBounds;
+    if (!s) return false;
+    const slop = 12;
+    return pos.x >= s.x && pos.x <= s.x + s.w && pos.y >= s.y - slop && pos.y <= s.y + s.h + slop;
+  }
+
+  _setVolumeFromX(x) {
+    const s = this.ui.sliderBounds;
+    if (!s) return;
+    this.audio.setVolume(Math.max(0, Math.min(1, (x - s.x) / s.w)));
+  }
+
   // ─── Update ───────────────────────────────────────────────────────────────────
 
   _update(dt) {
@@ -163,9 +222,9 @@ export class Game {
 
       if (this.input.isDown('Space', 'Enter')) {
         this.audio._getCtx(); // unlock AudioContext on first interaction
-        this.fartSound.init(this.audio.getCtx()); // preload fart sounds
-        this.sndKuhpop.init(this.audio.getCtx());
-        this.sndPiss.init(this.audio.getCtx());
+        this.fartSound.init(this.audio); // preload fart sounds
+        this.sndKuhpop.init(this.audio);
+        this.sndPiss.init(this.audio);
         this.startGame();
       }
       return;
