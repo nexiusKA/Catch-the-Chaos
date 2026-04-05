@@ -135,7 +135,8 @@ export class AudioManager {
     this._ctx        = null;
     this._masterGain = null;
     // Load persisted settings (default: unmuted, full volume)
-    this.volume = parseFloat(localStorage.getItem('catchChaosVol') ?? '1');
+    const storedVol = parseFloat(localStorage.getItem('catchChaosVol') ?? '1');
+    this.volume = isNaN(storedVol) ? 1 : Math.max(0, Math.min(1, storedVol));
     this.muted  = localStorage.getItem('catchChaosMuted') === 'true';
   }
 
@@ -174,7 +175,9 @@ export class AudioManager {
     }
   }
 
-  /** Set volume (0–1) and persist to localStorage. */
+  /** Set volume (0–1) and persist to localStorage.
+   *  Dragging the slider to a non-zero value also clears the muted flag so
+   *  the audio resumes immediately, matching standard media-player behaviour. */
   setVolume(v) {
     this.volume = Math.max(0, Math.min(1, v));
     if (this.volume > 0) this.muted = false;

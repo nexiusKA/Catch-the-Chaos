@@ -186,9 +186,12 @@ export class Game {
   /** Convert client (screen) coordinates to logical canvas coordinates. */
   _canvasPos(clientX, clientY) {
     const rect   = this.canvas.getBoundingClientRect();
-    const scaleX = this.width  / this.canvas.clientWidth;
-    const scaleY = this.height / this.canvas.clientHeight;
-    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+    const cw     = this.canvas.clientWidth  || this.width;
+    const ch     = this.canvas.clientHeight || this.height;
+    return {
+      x: (clientX - rect.left) * (this.width  / cw),
+      y: (clientY - rect.top)  * (this.height / ch),
+    };
   }
 
   _hitSoundBtn(pos) {
@@ -198,10 +201,10 @@ export class Game {
   }
 
   _hitSlider(pos) {
-    const s = this.ui.sliderBounds;
+    const s    = this.ui.sliderBounds;
     if (!s) return false;
-    const slop = 12;
-    return pos.x >= s.x && pos.x <= s.x + s.w && pos.y >= s.y - slop && pos.y <= s.y + s.h + slop;
+    const SLOP = 12; // extra vertical hit area for easier touch targeting
+    return pos.x >= s.x && pos.x <= s.x + s.w && pos.y >= s.y - SLOP && pos.y <= s.y + s.h + SLOP;
   }
 
   _setVolumeFromX(x) {
