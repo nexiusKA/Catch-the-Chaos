@@ -42,10 +42,12 @@ export class Game {
       if (this.state === STATES.MENU) {
         if (this._hitSoundBtn(pos)) { this.audio.toggleMute(); return; }
         if (this._hitSlider(pos))   { this._sliderDrag = true; this._setVolumeFromX(pos.x); return; }
-        this.fartSound.init(this.audio);
-        this.sndKuhpop.init(this.audio);
-        this.sndPiss.init(this.audio);
-        this.startGame();
+        if (this._hitStartBtn(pos)) {
+          this.fartSound.init(this.audio);
+          this.sndKuhpop.init(this.audio);
+          this.sndPiss.init(this.audio);
+          this.startGame();
+        }
       } else if (this.state === STATES.GAME_OVER) {
         this.startGame();
       }
@@ -67,7 +69,14 @@ export class Game {
       if (this.state !== STATES.MENU) return;
       const pos = this._canvasPos(e.clientX, e.clientY);
       if (this._hitSoundBtn(pos)) { this.audio._getCtx(); this.audio.toggleMute(); return; }
-      if (this._hitSlider(pos))   { this._sliderDrag = true; this._setVolumeFromX(pos.x); }
+      if (this._hitSlider(pos))   { this._sliderDrag = true; this._setVolumeFromX(pos.x); return; }
+      if (this._hitStartBtn(pos)) {
+        this.audio._getCtx();
+        this.fartSound.init(this.audio);
+        this.sndKuhpop.init(this.audio);
+        this.sndPiss.init(this.audio);
+        this.startGame();
+      }
     });
     canvas.addEventListener('mousemove', (e) => {
       if (this._sliderDrag && this.state === STATES.MENU) {
@@ -192,6 +201,12 @@ export class Game {
       x: (clientX - rect.left) * (this.width  / cw),
       y: (clientY - rect.top)  * (this.height / ch),
     };
+  }
+
+  _hitStartBtn(pos) {
+    const b = this.ui.startBtnBounds;
+    if (!b) return false;
+    return pos.x >= b.x && pos.x <= b.x + b.w && pos.y >= b.y && pos.y <= b.y + b.h;
   }
 
   _hitSoundBtn(pos) {

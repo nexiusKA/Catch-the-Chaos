@@ -136,16 +136,11 @@ export class UI {
     ctx.font      = 'bold 15px Arial';
     ctx.fillText('← / → or A / D to move  |  ◀ ▶ on mobile', W / 2, H * 0.28 + 124);
 
-    // Blinking prompt
-    const pulse = 0.7 + Math.sin(t * 4) * 0.3;
-    ctx.globalAlpha = pulse;
-    ctx.fillStyle   = '#FFFFFF';
-    ctx.font        = 'bold 20px "Arial Black", Arial';
-    ctx.fillText('SPACE / ENTER / Tap to play!', W / 2, H * 0.65);
-    ctx.globalAlpha = 1;
-
-    // Sound controls (mute button + volume slider)
+    // Sound controls (mute button + volume slider) — placed well above the start button
     this._drawSoundControls(ctx, W, H);
+
+    // START button
+    this._drawStartButton(ctx, W, H, t);
 
     // High score
     if (g.highScore > 0) {
@@ -176,7 +171,7 @@ export class UI {
     const volume  = audio.volume;
 
     // Layout: mute button + volume slider, centred horizontally
-    const cy      = H * 0.555;          // vertical centre of the row
+    const cy      = H * 0.48;           // vertical centre of the row (higher up, away from start button)
     const btnW    = 30;  const btnH = 26;
     const slW     = 148; const slH  = 10;
     const gap     = 10;
@@ -245,6 +240,51 @@ export class UI {
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle    = 'rgba(200,200,200,0.8)';
     ctx.fillText(`${Math.round(volume * 100)}%`, sx + slW + 18, cy + 4);
+  }
+
+  _drawStartButton(ctx, W, H, t) {
+    const bW   = 200;
+    const bH   = 52;
+    const bx   = W / 2 - bW / 2;
+    const by   = H * 0.62 - bH / 2;
+
+    // Store bounds for hit-testing
+    this.startBtnBounds = { x: bx, y: by, w: bW, h: bH };
+
+    // Pulsing glow
+    const pulse = 0.7 + Math.sin(t * 4) * 0.3;
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.shadowColor  = '#FFD700';
+    ctx.shadowBlur   = 18;
+    const grad = ctx.createLinearGradient(bx, by, bx, by + bH);
+    grad.addColorStop(0, '#FF8C00');
+    grad.addColorStop(1, '#FF3300');
+    ctx.fillStyle = grad;
+    roundRect(ctx, bx, by, bW, bH, 12);
+    ctx.fill();
+    ctx.shadowBlur   = 0;
+    ctx.strokeStyle  = '#FFD700';
+    ctx.lineWidth    = 2.5;
+    roundRect(ctx, bx, by, bW, bH, 12);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.font         = 'bold 22px "Arial Black", Arial';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = '#FFFFFF';
+    ctx.fillText('▶  START', W / 2, by + bH / 2);
+    ctx.restore();
+
+    // Keyboard hint below button
+    ctx.save();
+    ctx.font         = '12px Arial';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle    = 'rgba(200,200,200,0.65)';
+    ctx.fillText('Space / Enter', W / 2, by + bH + 16);
+    ctx.restore();
   }
 
   _drawLegend(ctx, cx, cy) {
